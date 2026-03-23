@@ -1,24 +1,25 @@
-# Ignore system files
+# ── System files ─────────────────────────────
 .DS_Store
 Thumbs.db
 
-# Ignore build/output files
+# ── Build / output ──────────────────────────
 dist/
 build/
 
-# Ignore dependencies
+# ── Dependencies ────────────────────────────
 node_modules/
 
-# Ignore logs and temp files
+# ── Logs & temp ────────────────────────────
 *.log
 *.tmp
 
-# Ignore environment files
+# ── Environment / secrets ───────────────────
 .env
 
-stuff/
-
-
-
-config.py
+# ── Python ─────────────────────────────────
 __pycache__/
+*.pyc
+
+# ── Project-specific ───────────────────────
+stuff/
+config.py
