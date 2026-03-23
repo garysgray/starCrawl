@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=News+Cycle:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <title>Space Crawl</title>
+</head>
+<body>
+
+  <!-- ── Scene Layers ───────────────────────────────────────── -->
+  <canvas id="stars"></canvas>
+  <div id="nebula"></div>
+  <canvas id="ships"></canvas>
+  <div id="vignette"></div>
+  <canvas id="noise"></canvas>
+
+  <!-- ── Crawl ──────────────────────────────────────────────── -->
+  <div class="crawl-stage">
+    <div class="crawl-perspective">
+      <div class="crawl-content" id="crawl-content"></div>
+    </div>
+  </div>
+
+  <!-- fade divs OUTSIDE crawl-stage so 3D transform doesn't swallow them -->
+  <div class="crawl-fade-top"></div>
+  <div class="crawl-fade-bottom"></div>
+
+  <!-- ── HUD ────────────────────────────────────────────────── -->
+  <nav class="HUD" role="complementary" aria-label="Scene controls">
+
+    <div class="control-group">
+      <span class="control-label">Speed</span>
+      <div class="btn-row">
+        <button id="speed-slow" class="active-speed">Slow</button>
+        <button id="speed-med">Med</button>
+        <button id="speed-fast">Fast</button>
+      </div>
+    </div>
+
+    <div class="hud-divider"></div>
+
+    <div class="control-group">
+      <span class="control-label">Stars</span>
+      <div class="btn-row">
+        <button id="stars-calm" class="active-speed">Calm</button>
+        <button id="stars-drift">Drift</button>
+        <button id="stars-warp">Warp</button>
+      </div>
+    </div>
+
+    <div class="hud-divider"></div>
+
+    <div class="control-group">
+      <span class="control-label">Edit Text</span>
+      <div class="btn-row">
+        <button id="edit-text">Edit</button>
+      </div>
+    </div>
+
+  </nav>
+
+  <!-- ── Text Editor Overlay ────────────────────────────────── -->
+  <div class="editor-overlay" id="editor-overlay">
+    <div class="editor-box">
+
+      <div class="editor-header">
+        <span class="editor-title">Edit Crawl Text</span>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="editor-help-btn" id="editor-help-btn">?</button>
+          <button class="editor-close"    id="editor-close">✕</button>
+        </div>
+      </div>
+
+      <div class="editor-help" id="editor-help">
+        <p><span class="help-code">#TITLE HERE</span> — large centered title</p>
+        <p><span class="help-code">---</span> — large gap between segments</p>
+        <p>Blank line between paragraphs splits them</p>
+        <p>First line of editor = first thing seen on screen</p>
+      </div>
+
+      <textarea id="crawl-editor" spellcheck="false"></textarea>
+
+      <div class="editor-footer">
+        <button id="editor-apply">Apply</button>
+        <button id="editor-reset">Reset</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Scripts (order matters — dependencies before dependents) ── -->
+  <script src="data/crawl-text.js"></script>
+  <script src="js/ShipConfig.js"></script>
+  <script src="js/Ship.js"></script>
+  <script src="js/ShipRenderer.js"></script>
+  <script src="js/ShipLayer.js"></script>
+  <script src="js/StarField.js"></script>
+  <script src="js/SpaceAudio.js"></script>
+  <script src="js/Crawl.js"></script>
+  <script src="js/Hud.js"></script>
+  <script src="js/Controller.js"></script>
+  <script src="js/Main.js"></script>
+
+</body>
+</html>
