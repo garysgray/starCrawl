@@ -1,4 +1,10 @@
 // ── ShipLayer ─────────────────────────────────────────────────
+
+const timerModes = 
+{
+     COUNTDOWN: "countdown", 
+     COUNTUP: "countup" 
+};
 class ShipLayer
 {
   constructor()
@@ -8,18 +14,12 @@ class ShipLayer
     this.ships    = [];
     this.renderer = new ShipRenderer();
 
+    // Create the spawner timer (45 seconds initial delay)
+    this.spawnTimer = new Timer("ShipSpawner", 45, timerModes.COUNTDOWN, false);
+    this.spawnTimer.start();
+
     this._resize();
     window.addEventListener('resize', () => this._resize());
-
-    // Delay first spawn so the scene has time to settle before a ship appears
-    if (this.ships.length < 1)
-    {
-        setTimeout(() =>
-      {
-        this._spawnShip();
-        this._scheduleNext();
-      }, 3000);
-    }
   }
 
   // ---- Setup ----------------------------------------------------------------
@@ -31,24 +31,20 @@ class ShipLayer
 
   // ---- Spawning -------------------------------------------------------------
 
- _getInterval()
-{
-  return window.innerWidth >= SHIP_INTERVAL.breakpoint
-    ? SHIP_INTERVAL.wide
-    : SHIP_INTERVAL.narrow;
-}
-
-
-  // Queues the next ship on a randomised interval defined in SHIP_INTERVAL
-_scheduleNext()
-{
-  const delay = this._getInterval();
-  setTimeout(() => { this._spawnShip(); this._scheduleNext(); }, delay);
-}
+  _getInterval()
+  {
+    return window.innerWidth >= SHIP_INTERVAL.breakpoint
+      ? SHIP_INTERVAL.wide
+      : SHIP_INTERVAL.narrow;
+  }
 
   // Adds a new ship at the spawn position defined in SHIP_TUNING
   _spawnShip()
   {
+    if (this.ships.length > 0) return; // safety
+
+    console.log("i spawned");
+    console.log(this.ships.length );
     this.ships.push(new Ship(SHIP_TUNING.spawnX, SHIP_TUNING.spawnY));
   }
 
@@ -56,6 +52,12 @@ _scheduleNext()
   // Advances all ships and removes any that have gone offscreen or faded out
   update(dt)
   {
+    // Update the timer
+    if (this.spawnTimer.update(dt)) {
+        // .update() returns true when the timer finishes
+        this._handleSpawnTick();
+    }
+
     for (let i = this.ships.length - 1; i >= 0; i--)
     {
       const s = this.ships[i];
@@ -89,4 +91,22 @@ _scheduleNext()
       ctx.restore();
     }
   }
+
+  _handleSpawnTick() 
+  {
+    // 1. Spawn the ship if possible
+    if (this.ships.length === 0) 
+    {
+        this._spawnShip();
+    }
+
+    // 2. Get the next interval (in ms) and convert to seconds
+    const nextDelayMs = this._getInterval();
+    const nextDelaySec = nextDelayMs / 1000;
+    console.log(`Next ship in: ${nextDelaySec} seconds.`);
+
+    // 3. Restart the timer with the new duration
+    this.spawnTimer.setAndStart(nextDelaySec);
+  }
 }
+

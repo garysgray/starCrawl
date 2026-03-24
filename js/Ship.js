@@ -10,10 +10,15 @@ class Ship
 
   // ---- Loop -----------------------------------------------------------------
   // Moves the ship and fades it out as it approaches the top of the screen
+  // update(tuning, dt)
   update(tuning, dt)
   {
-    this.yPct -= tuning.speed * dt;
-    this.xPct += tuning.driftX * dt;
+    // Normalize to a base screen height so speed feels the same on all screens
+    const BASE_H = 900;
+    const scale  = BASE_H / window.innerHeight;
+
+    this.yPct -= tuning.speed * dt * scale;
+    this.xPct += tuning.driftX * dt * scale;
 
     if (this.yPct < tuning.fadeOutZone)
       this.alpha = Math.max(0, this.alpha - tuning.fadeSpeed * dt);

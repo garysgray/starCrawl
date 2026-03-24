@@ -9,14 +9,21 @@ const SHIP_INTERVAL =
 
 const SHIP_TUNING = 
 {
-  spawnX: 100,
-  spawnY: 250,
-  speed: 0.15,
-  driftX: -0.04,
-  size: 1,
-  shrink: .0001,
-  flattenY: 0.3,
-  rotation: 1.48,
-  fadeOutZone: -999,
-  fadeSpeed: 0.008
+  // Position as % of screen dimensions (0-100 = on screen, >100 = off screen)
+  spawnX:      100,    // 100% = right edge
+  spawnY:      250,    // 250% = well below the bottom
+
+  // Movement per tick as % of screen
+  speed:       0.15,   // moves up 0.15% of screen height per tick
+  driftX:      -0.04,  // drifts left 0.04% of screen width per tick
+
+  // Visual
+  size:        1,      // scale as % of screen width
+  shrink:      0.0001, // scale reduction as ship recedes
+  flattenY:    0.3,    // vertical squash for belly-view perspective
+  rotation:    1.48,   // angle in multiples of π (1.5 = straight up)
+
+  // Fade (set fadeOutZone to -999 to disable)
+  fadeOutZone: -999,   // % from top where fade begins
+  fadeSpeed:   0.008,  // alpha reduction per tick
 };

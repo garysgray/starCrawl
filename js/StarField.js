@@ -63,9 +63,11 @@ class StarField
   // ---- Loop -----------------------------------------------------------------
   update(dt)
   {
-    const cfg = starModes[this.mode];
-    const w   = this.canvas.width;
-    const h   = this.canvas.height;
+    const BASE_H = 900;
+    const scale  = BASE_H / window.innerHeight;
+    const cfg    = starModes[this.mode];
+    const w      = this.canvas.width;
+    const h      = this.canvas.height;
 
     for (let i = 0; i < this.stars.length; i++)
     {
@@ -75,14 +77,14 @@ class StarField
         const dx  = s.x - this.cx;
         const dy  = s.y - this.cy;
         const len = Math.sqrt(dx * dx + dy * dy) || 1;
-        s.x += (dx / len) * cfg.speed * s.speed * dt;
-        s.y += (dy / len) * cfg.speed * s.speed * dt;
+        s.x += (dx / len) * cfg.speed * s.speed * dt * scale;
+        s.y += (dy / len) * cfg.speed * s.speed * dt * scale;
         if (s.x < 0 || s.x > w || s.y < 0 || s.y > h)
           Object.assign(s, this._makeStar(true));
       }
       else if (this.mode === 'drift')
       {
-        s.y += cfg.speed * s.speed * dt;
+        s.y += cfg.speed * s.speed * dt * scale;
         if (s.y > h) { s.y = 0; s.x = Math.random() * w; }
         s.twinkle += 0.02 * dt;
       }

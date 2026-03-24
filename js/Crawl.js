@@ -66,13 +66,12 @@ class Crawl
   // Advances scroll position — called by the main game loop each frame
   update(dt)
   {
-    // Wait until the DOM has rendered content and we can measure its height
     if (!this._ready)
     {
       const h = this.content.scrollHeight;
       if (h > 0)
       {
-        this.yPos   = h;          // start scroll from the bottom of the content
+        this.yPos   = h;
         this._ready = true;
         this.content.style.opacity = '1';
       }
@@ -81,10 +80,12 @@ class Crawl
 
     if (!this.running) return;
 
-    // Advance scroll position — dt * 60 normalises to 60hz so speed is frame-rate independent
-    this.yPos -= this._getSpeed() * dt;
+    // Normalize to base screen height so scroll feels same on all screens
+    const BASE_H = 900;
+    const scale  = BASE_H / window.innerHeight;
 
-    // Once all content has scrolled off the top, loop back to the bottom
+    this.yPos -= this._getSpeed() * dt * scale;
+
     if (this.yPos < -(window.innerHeight * 2))
       this.yPos = this.content.scrollHeight;
 
