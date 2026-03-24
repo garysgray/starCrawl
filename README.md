@@ -1,4 +1,4 @@
-![Game Splash](stuff/SpaceCrawl.png)
+![Game Splash](assets/SpaceCrawl.png)
 
 
 # Space Crawl
