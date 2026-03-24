@@ -1,4 +1,4 @@
-//const SHIP_INTERVAL = { min: 20000, range: 0 };
+
 const SHIP_INTERVAL =
 {
   narrow:     20000,

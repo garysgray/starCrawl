@@ -1,5 +1,15 @@
 // ── HUD ───────────────────────────────────────────────────────
 
+// ---- Config -----------------------------------------------------------------
+const HUD_HIDE_DELAY    = 3000;   // ms of inactivity before HUD hides
+const HUD_TRANSITION    = 'opacity 0.6s ease, transform 0.6s ease';
+const HUD_CURSOR_ACTIVE = 'crosshair';
+const HUD_CURSOR_HIDDEN = 'none';
+
+// ---- Button groups ----------------------------------------------------------
+const SPEED_IDS = ['slow', 'med',  'fast'];
+const STAR_IDS  = ['calm', 'drift', 'warp'];
+
 class HUD
 {
   constructor(onSpeedChange, onStarMode, onClickSound)
@@ -14,34 +24,36 @@ class HUD
     this._initAutoHide();
   }
 
+  // ---- Setup ----------------------------------------------------------------
+  // Wires up speed and star mode button groups
   _bindButtons()
   {
-    ['slow', 'med', 'fast'].forEach(id =>
-    {
-      document.getElementById(`speed-${id}`).addEventListener('click', () =>
-      {
-        this.onClickSound();
-        ['slow', 'med', 'fast'].forEach(b => document.getElementById(`speed-${b}`).className = '');
-        document.getElementById(`speed-${id}`).className = 'active-speed';
-        this.onSpeedChange(id);
-      });
-    });
+    this._bindGroup('speed', SPEED_IDS, this.onSpeedChange);
+    this._bindGroup('stars', STAR_IDS,  this.onStarMode);
+  }
 
-    ['calm', 'drift', 'warp'].forEach(id =>
+  // Binds a group of buttons — clicking one activates it and deactivates the rest
+  _bindGroup(prefix, ids, callback)
+  {
+    ids.forEach(id =>
     {
-      document.getElementById(`stars-${id}`).addEventListener('click', () =>
+      document.getElementById(`${prefix}-${id}`).addEventListener('click', () =>
       {
         this.onClickSound();
-        ['calm', 'drift', 'warp'].forEach(b => document.getElementById(`stars-${b}`).className = '');
-        document.getElementById(`stars-${id}`).className = 'active-speed';
-        this.onStarMode(id);
+        ids.forEach(b => document.getElementById(`${prefix}-${b}`).className = '');
+        document.getElementById(`${prefix}-${id}`).className = 'active-speed';
+        callback(id);
       });
     });
   }
 
+  // ---- Auto-hide ------------------------------------------------------------
+  // HUD fades in on load then hides after inactivity — reappears on mouse/touch
   _initAutoHide()
   {
-    this.el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    this.el.style.transition = HUD_TRANSITION;
+
+    // Double rAF ensures transition is registered before first show
     requestAnimationFrame(() =>
     {
       requestAnimationFrame(() =>
@@ -54,20 +66,22 @@ class HUD
     });
   }
 
+  // Shows the HUD and resets the hide timer
   _show()
   {
     this.el.style.opacity       = '1';
     this.el.style.pointerEvents = 'auto';
     this.el.style.transform     = 'translateX(-50%) translateY(0)';
-    document.body.style.cursor  = 'crosshair';
+    document.body.style.cursor  = HUD_CURSOR_ACTIVE;
     clearTimeout(this.hideTimer);
-    this.hideTimer = setTimeout(() => this._hide(), 3000);
+    this.hideTimer = setTimeout(() => this._hide(), HUD_HIDE_DELAY);
   }
 
+  // Hides the HUD and cursor after inactivity
   _hide()
   {
     this.el.style.opacity       = '0';
     this.el.style.pointerEvents = 'none';
-    document.body.style.cursor  = 'none';
+    document.body.style.cursor  = HUD_CURSOR_HIDDEN;
   }
 }

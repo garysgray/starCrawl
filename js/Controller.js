@@ -1,15 +1,15 @@
 // ── Controller ────────────────────────────────────────────────
+// Infrastructure only — owns audio, hud, and the active scene.
+
 class Controller
 {
   constructor()
   {
     this.audio = new SpaceAudio();
-    this.stars = new StarField();
-    this.ships = new ShipLayer();
-    this.crawl = new Crawl(this.audio);
+    this.scene = new Scene(this.audio);
     this.hud   = new HUD(
-      (id) => this.crawl.setSpeed(id),
-      (id) => this.stars.setMode(id),
+      (id) => this.scene.crawl.setSpeed(id),
+      (id) => this.scene.stars.setMode(id),
       ()   => this.audio.playClick()
     );
     document.addEventListener('click', () => this.audio.resume(), { once: true });
@@ -17,32 +17,24 @@ class Controller
 
   update(dt)
   {
-    this.stars.update(dt);
-    this.ships.update(dt);
-    this.crawl.update(dt);
+    this.scene.update(dt);
   }
 
   draw()
   {
-    this.stars.draw();
-    this.ships.draw();
-    this.crawl.draw();
+    this.scene.draw();
   }
 
   start()
   {
-    // Set initial active states on buttons
-    document.getElementById('speed-med').className = 'active-speed';
+    document.getElementById('speed-fast').className  = 'active-speed';
     document.getElementById('stars-drift').className = 'active-speed';
+    this.scene.crawl.setSpeed('fast');
+    this.scene.stars.setMode('drift');
 
-    // Set actual system states to match
-    this.crawl.setSpeed('med');
-    this.stars.setMode('drift');
-
-    // Fade in crawl once everything is ready
     setTimeout(() =>
     {
-        document.querySelector('.crawl-stage').style.opacity = '1';
+      document.querySelector('.crawl-stage').style.opacity = '1';
     }, 500);
   }
 }

@@ -1,5 +1,22 @@
 // ── Crawl ─────────────────────────────────────────────────────
-const crawlSpeed = { slow: 0.4, med: 0.9, fast: 2.0 };
+
+// Scroll speeds in pixels per tick at base screen height
+const crawlSpeed =
+{
+  slow: 0.4,
+  med:  0.9,
+  fast: 2.0
+};
+
+// Screen height everything is normalised against — speeds feel
+// consistent on any screen size relative to this value
+const CRAWL_BASE_H     = 900;
+
+// How far past the top before the crawl resets to the bottom
+const CRAWL_RESET_MULT = 2;
+
+// Height of a '---' spacer block in px
+const CRAWL_SPACER_H   = 600;
 
 class Crawl
 {
@@ -13,7 +30,7 @@ class Crawl
     this.speed       = 'slow';
     this.yPos        = 0;
     this.running     = true;
-    this._ready      = false;         // gates update until DOM is measured
+    this._ready      = false;   // gates update until DOM is measured
 
     this._buildContent(this.defaultText);
     this._bindEditor();
@@ -43,7 +60,7 @@ class Crawl
       if (para.trim() === '---')
       {
         const spacer        = document.createElement('div');
-        spacer.style.height = '600px';
+        spacer.style.height = `${CRAWL_SPACER_H}px`;
         this.content.appendChild(spacer);
         return;
       }
@@ -80,13 +97,12 @@ class Crawl
 
     if (!this.running) return;
 
-    // Normalize to base screen height so scroll feels same on all screens
-    const BASE_H = 900;
-    const scale  = BASE_H / window.innerHeight;
+    // Normalise to base screen height so scroll speed is consistent across screens
+    const scale = CRAWL_BASE_H / window.innerHeight;
+    this.yPos  -= this._getSpeed() * dt * scale;
 
-    this.yPos -= this._getSpeed() * dt * scale;
-
-    if (this.yPos < -(window.innerHeight * 2))
+    // Reset to bottom once all content has scrolled off the top
+    if (this.yPos < -(window.innerHeight * CRAWL_RESET_MULT))
       this.yPos = this.content.scrollHeight;
 
     const pitch = this._getPitch();

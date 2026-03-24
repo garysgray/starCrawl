@@ -1,22 +1,28 @@
-// ── ShipLayer ─────────────────────────────────────────────────
-
+// ── Scene ─────────────────────────────────────────────────────
+// Owns everything visual and temporal — stars, ships, crawl, cues.
+// Controller owns infrastructure (audio, hud). Scene owns the experience.
 const timerModes = 
 {
      COUNTDOWN: "countdown", 
      COUNTUP: "countup" 
 };
-class ShipLayer
+
+class Scene
 {
-  constructor()
+  constructor(audio)
   {
-    this.canvas   = document.getElementById('ships');
-    this.ctx      = this.canvas.getContext('2d');
-    this.ships    = [];
+    this.stars  = new StarField();
+    this.crawl  = new Crawl(audio);
+    this.ships  = [];
+    this.canvas = document.getElementById('ships');
+    this.ctx    = this.canvas.getContext('2d');
     this.renderer = new ShipRenderer();
 
-    // Create the spawner timer (45 seconds initial delay)
-    this.spawnTimer = new Timer("ShipSpawner", 45, timerModes.COUNTDOWN, false);
+    // Spawn timer — initial delay before first ship
+    this.spawnTimer = new Timer('ShipSpawner', 45, timerModes.COUNTDOWN, false);
     this.spawnTimer.start();
+
+ 
 
     this._resize();
     window.addEventListener('resize', () => this._resize());
@@ -30,7 +36,6 @@ class ShipLayer
   }
 
   // ---- Spawning -------------------------------------------------------------
-
   _getInterval()
   {
     return window.innerWidth >= SHIP_INTERVAL.breakpoint
@@ -38,26 +43,32 @@ class ShipLayer
       : SHIP_INTERVAL.narrow;
   }
 
-  // Adds a new ship at the spawn position defined in SHIP_TUNING
   _spawnShip()
   {
-    if (this.ships.length > 0) return; // safety
-
-    console.log("i spawned");
-    console.log(this.ships.length );
+    //console.log("i spawned");
+    //console.log(this.ships.length );
+    if (this.ships.length > 0) return;
     this.ships.push(new Ship(SHIP_TUNING.spawnX, SHIP_TUNING.spawnY));
   }
 
+  _handleSpawnTick()
+  {
+    if (this.ships.length === 0) this._spawnShip();
+    const nextDelaySec = this._getInterval() / 1000;
+    this.spawnTimer.setAndStart(nextDelaySec);
+    //console.log(`Next ship in: ${nextDelaySec} seconds.`);
+  }
+
   // ---- Loop -----------------------------------------------------------------
-  // Advances all ships and removes any that have gone offscreen or faded out
   update(dt)
   {
-    // Update the timer
-    if (this.spawnTimer.update(dt)) {
-        // .update() returns true when the timer finishes
-        this._handleSpawnTick();
-    }
+    this.stars.update(dt);
+    this.crawl.update(dt);
 
+    // Timer-based spawning
+    if (this.spawnTimer.update(dt)) this._handleSpawnTick();
+
+    // Update ships
     for (let i = this.ships.length - 1; i >= 0; i--)
     {
       const s = this.ships[i];
@@ -66,13 +77,14 @@ class ShipLayer
     }
   }
 
-  // Draws all active ships — position and scale converted from % to pixels
   draw()
   {
+    this.stars.draw();
+
+    // Draw ships
     const { ctx, canvas } = this;
     const w = canvas.width;
     const h = canvas.height;
-
     ctx.clearRect(0, 0, w, h);
 
     for (let i = 0; i < this.ships.length; i++)
@@ -84,29 +96,13 @@ class ShipLayer
 
       ctx.save();
       ctx.translate(drawX, drawY);
-      ctx.scale(scale, scale * SHIP_TUNING.flattenY);  // flattenY squashes for belly-view perspective
+      ctx.scale(scale, scale * SHIP_TUNING.flattenY);
       ctx.rotate(Math.PI * SHIP_TUNING.rotation);
       ctx.globalAlpha = s.alpha;
       this.renderer.draw(ctx);
       ctx.restore();
     }
-  }
 
-  _handleSpawnTick() 
-  {
-    // 1. Spawn the ship if possible
-    if (this.ships.length === 0) 
-    {
-        this._spawnShip();
-    }
-
-    // 2. Get the next interval (in ms) and convert to seconds
-    const nextDelayMs = this._getInterval();
-    const nextDelaySec = nextDelayMs / 1000;
-    console.log(`Next ship in: ${nextDelaySec} seconds.`);
-
-    // 3. Restart the timer with the new duration
-    this.spawnTimer.setAndStart(nextDelaySec);
+    this.crawl.draw();
   }
 }
-
