@@ -7,6 +7,7 @@ let lastTime         = performance.now();
 let accumulator      = 0;
 
 const FIXED_TIMESTEP = 1 / 60;   // Logic runs at a locked 60hz regardless of framerate
+const TIMESTEP_NORM  = FIXED_TIMESTEP * 60;  // always 1.0 — speeds are tuned at 60hz
 const MAX_FRAME_TIME = 0.25;      // Caps spiral-of-death if tab loses focus
 const MAX_STEPS      = 5;         // Max logic steps per frame before we bail
 const SAFE_START_MS  = 100;       // Poll interval while waiting for canvas to be ready
@@ -61,7 +62,7 @@ function gameLoop()
   let steps = 0;
   while (accumulator >= FIXED_TIMESTEP && steps < MAX_STEPS)
   {
-    myController.update(FIXED_TIMESTEP);
+    myController.update(TIMESTEP_NORM);
     accumulator -= FIXED_TIMESTEP;
     steps++;
   }

@@ -109,6 +109,18 @@ body
   z-index:        10;
   pointer-events: none;
   overflow:       hidden;
+  -webkit-mask-image: linear-gradient(to bottom,
+    transparent  0%,
+    transparent 20%,
+    black       35%,
+    black       85%,
+    transparent 100%);
+  mask-image: linear-gradient(to bottom,
+    transparent  0%,
+    transparent 20%,
+    black       35%,
+    black       85%,
+    transparent 100%);
 }
 
 .crawl-perspective
@@ -132,36 +144,6 @@ body
   transform:       translateX(-50%) rotateX(var(--crawl-pitch));
   text-align:      justify;
   padding-bottom:  5vh;
-}
-
-/* Fade divs sit outside crawl-stage so they layer above the 3D context */
-.crawl-fade-top
-{
-  position:       fixed;
-  top:            0;
-  left:           0;
-  width:          100%;
-  height:         50%;
-  z-index:        20;
-  pointer-events: none;
-  background: linear-gradient(to bottom,
-    rgba(0,0,0,1)   0%,
-    rgba(0,0,0,1)  25%,
-    rgba(0,0,0,0) 100%);
-}
-
-.crawl-fade-bottom
-{
-  position:       fixed;
-  bottom:         0;
-  left:           0;
-  width:          100%;
-  height:         15%;
-  z-index:        20;
-  pointer-events: none;
-  background: linear-gradient(to top,
-    rgba(0,0,0,1)   0%,
-    rgba(0,0,0,0) 100%);
 }
 
 .crawl-title
@@ -447,6 +429,19 @@ button.active-speed
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 640px)
 {
+  :root
+  {
+    --crawl-width   : 92%;
+    --crawl-pitch   : 30deg;
+  }
+
+  .crawl-content p,
+  .crawl-title
+  {
+    font-size:      clamp(24px, 4vw, 36px);
+    letter-spacing: 0.02em;
+  }
+
   .HUD
   {
     flex-direction: column;
@@ -476,8 +471,7 @@ button.active-speed
     padding:         0;
   }
 
-  .btn-row        { gap: 6px; }
-  .HUD button     { font-size: 11px; padding: 8px 12px; }
-  .control-label  { font-size: 9px; }
-  .crawl-content  { width: 80%; }
+  .btn-row       { gap: 6px; }
+  .HUD button    { font-size: 11px; padding: 8px 12px; }
+  .control-label { font-size: 9px; }
 }

@@ -19,14 +19,12 @@
 
   <!-- ── Crawl ──────────────────────────────────────────────── -->
   <div class="crawl-stage">
-    <div class="crawl-perspective">
-      <div class="crawl-content" id="crawl-content"></div>
-    </div>
+  <div class="crawl-perspective">
+    <div class="crawl-content" id="crawl-content"></div>
   </div>
-
-  <!-- fade divs OUTSIDE crawl-stage so 3D transform doesn't swallow them -->
   <div class="crawl-fade-top"></div>
   <div class="crawl-fade-bottom"></div>
+</div>
 
   <!-- ── HUD ────────────────────────────────────────────────── -->
   <nav class="HUD" role="complementary" aria-label="Scene controls">
@@ -34,7 +32,7 @@
     <div class="control-group">
       <span class="control-label">Speed</span>
       <div class="btn-row">
-        <button id="speed-slow" class="active-speed">Slow</button>
+        <button id="speed-slow">Slow</button>
         <button id="speed-med">Med</button>
         <button id="speed-fast">Fast</button>
       </div>
@@ -45,7 +43,7 @@
     <div class="control-group">
       <span class="control-label">Stars</span>
       <div class="btn-row">
-        <button id="stars-calm" class="active-speed">Calm</button>
+        <button id="stars-calm">Calm</button>
         <button id="stars-drift">Drift</button>
         <button id="stars-warp">Warp</button>
       </div>

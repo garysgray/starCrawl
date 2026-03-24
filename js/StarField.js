@@ -66,7 +66,6 @@ class StarField
     const cfg = starModes[this.mode];
     const w   = this.canvas.width;
     const h   = this.canvas.height;
-    const tick = dt * 60;  // normalise to 60hz
 
     for (let i = 0; i < this.stars.length; i++)
     {
@@ -76,20 +75,20 @@ class StarField
         const dx  = s.x - this.cx;
         const dy  = s.y - this.cy;
         const len = Math.sqrt(dx * dx + dy * dy) || 1;
-        s.x += (dx / len) * cfg.speed * s.speed * tick;
-        s.y += (dy / len) * cfg.speed * s.speed * tick;
+        s.x += (dx / len) * cfg.speed * s.speed * dt;
+        s.y += (dy / len) * cfg.speed * s.speed * dt;
         if (s.x < 0 || s.x > w || s.y < 0 || s.y > h)
           Object.assign(s, this._makeStar(true));
       }
       else if (this.mode === 'drift')
       {
-        s.y += cfg.speed * s.speed * tick;
+        s.y += cfg.speed * s.speed * dt;
         if (s.y > h) { s.y = 0; s.x = Math.random() * w; }
-        s.twinkle += 0.02 * tick;
+        s.twinkle += 0.02 * dt;
       }
       else
       {
-        s.twinkle += 0.015 * tick;
+        s.twinkle += 0.015 * dt;
       }
     }
   }

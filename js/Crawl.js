@@ -82,7 +82,7 @@ class Crawl
     if (!this.running) return;
 
     // Advance scroll position — dt * 60 normalises to 60hz so speed is frame-rate independent
-    this.yPos -= this._getSpeed() * dt * 60;
+    this.yPos -= this._getSpeed() * dt;
 
     // Once all content has scrolled off the top, loop back to the bottom
     if (this.yPos < -(window.innerHeight * 2))

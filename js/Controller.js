@@ -30,14 +30,19 @@ class Controller
   }
 
   start()
-{
-  document.getElementById('speed-slow').className = 'active-speed';
-  document.getElementById('stars-calm').className = 'active-speed';
-
-  // Fade in crawl once everything is ready
-  setTimeout(() =>
   {
-    document.querySelector('.crawl-stage').style.opacity = '1';
-  }, 500);
-}
+    // Set initial active states on buttons
+    document.getElementById('speed-med').className = 'active-speed';
+    document.getElementById('stars-drift').className = 'active-speed';
+
+    // Set actual system states to match
+    this.crawl.setSpeed('med');
+    this.stars.setMode('drift');
+
+    // Fade in crawl once everything is ready
+    setTimeout(() =>
+    {
+        document.querySelector('.crawl-stage').style.opacity = '1';
+    }, 500);
+  }
 }
