@@ -30,12 +30,21 @@ class ShipLayer
   }
 
   // ---- Spawning -------------------------------------------------------------
+
+ _getInterval()
+{
+  return window.innerWidth >= SHIP_INTERVAL.breakpoint
+    ? SHIP_INTERVAL.wide
+    : SHIP_INTERVAL.narrow;
+}
+
+
   // Queues the next ship on a randomised interval defined in SHIP_INTERVAL
-  _scheduleNext()
-  {
-    const delay = SHIP_INTERVAL.min + Math.random() * SHIP_INTERVAL.range;
-    setTimeout(() => { this._spawnShip(); this._scheduleNext(); }, delay);
-  }
+_scheduleNext()
+{
+  const delay = this._getInterval();
+  setTimeout(() => { this._spawnShip(); this._scheduleNext(); }, delay);
+}
 
   // Adds a new ship at the spawn position defined in SHIP_TUNING
   _spawnShip()

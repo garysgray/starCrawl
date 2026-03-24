@@ -1,4 +1,10 @@
-const SHIP_INTERVAL = { min: 20000, range: 100000 };
+//const SHIP_INTERVAL = { min: 20000, range: 0 };
+const SHIP_INTERVAL =
+{
+  narrow:     20000,
+  wide:       45000,
+  breakpoint: 1024
+};
 
 
 const SHIP_TUNING = 
