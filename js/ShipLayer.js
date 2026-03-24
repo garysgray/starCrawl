@@ -50,7 +50,7 @@ class ShipLayer
     for (let i = this.ships.length - 1; i >= 0; i--)
     {
       const s = this.ships[i];
-      s.update(SHIP_TUNING);
+      s.update(SHIP_TUNING, dt);
       if (s.isDead()) this.ships.splice(i, 1);
     }
   }

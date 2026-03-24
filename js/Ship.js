@@ -10,15 +10,15 @@ class Ship
 
   // ---- Loop -----------------------------------------------------------------
   // Moves the ship and fades it out as it approaches the top of the screen
-  update(tuning)
+  update(tuning, dt)
   {
-    this.yPct -= tuning.speed;
-    this.xPct += tuning.driftX;
+    const tick = dt * 60;
+    this.yPct -= tuning.speed * tick;
+    this.xPct += tuning.driftX * tick;
 
     if (this.yPct < tuning.fadeOutZone)
-      this.alpha = Math.max(0, this.alpha - tuning.fadeSpeed);
+      this.alpha = Math.max(0, this.alpha - tuning.fadeSpeed * tick);
   }
-
   // ---- State ----------------------------------------------------------------
   // Ship is removed once fully offscreen or fully transparent
   isDead()

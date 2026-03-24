@@ -128,7 +128,7 @@ class ShipRenderer
     // Dark inset before the top panel
     ctx.fillStyle = DARK_PANEL;
     ctx.beginPath();
-    ctx.moveTo(-75, -12); ctx.lineTo(-75, 12); ctx.lineTo(-125, 31); ctx.lineTo(-125, -31);
+    ctx.moveTo(-75, -12); ctx.lineTo(-75, 12); ctx.lineTo(-130, -31); ctx.lineTo(-130, 31);
     ctx.closePath(); ctx.fill();
 
     // Top hull-grad panel — flush face of the tail block

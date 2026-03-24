@@ -30,8 +30,14 @@ class Controller
   }
 
   start()
+{
+  document.getElementById('speed-slow').className = 'active-speed';
+  document.getElementById('stars-calm').className = 'active-speed';
+
+  // Fade in crawl once everything is ready
+  setTimeout(() =>
   {
-    document.getElementById('speed-slow').className = 'active-speed';
-    document.getElementById('stars-calm').className = 'active-speed';
-  }
+    document.querySelector('.crawl-stage').style.opacity = '1';
+  }, 500);
+}
 }

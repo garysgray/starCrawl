@@ -66,33 +66,30 @@ class StarField
     const cfg = starModes[this.mode];
     const w   = this.canvas.width;
     const h   = this.canvas.height;
+    const tick = dt * 60;  // normalise to 60hz
 
     for (let i = 0; i < this.stars.length; i++)
     {
       const s = this.stars[i];
-
       if (this.mode === 'warp')
       {
-        // Radiate outward from centre — reset to centre when offscreen
         const dx  = s.x - this.cx;
         const dy  = s.y - this.cy;
         const len = Math.sqrt(dx * dx + dy * dy) || 1;
-        s.x += (dx / len) * cfg.speed * s.speed;
-        s.y += (dy / len) * cfg.speed * s.speed;
+        s.x += (dx / len) * cfg.speed * s.speed * tick;
+        s.y += (dy / len) * cfg.speed * s.speed * tick;
         if (s.x < 0 || s.x > w || s.y < 0 || s.y > h)
           Object.assign(s, this._makeStar(true));
       }
       else if (this.mode === 'drift')
       {
-        // Fall downward — wrap back to top when offscreen
-        s.y += cfg.speed * s.speed;
+        s.y += cfg.speed * s.speed * tick;
         if (s.y > h) { s.y = 0; s.x = Math.random() * w; }
-        s.twinkle += 0.02;
+        s.twinkle += 0.02 * tick;
       }
       else
       {
-        // Calm — stars stay fixed, just twinkle in place
-        s.twinkle += 0.015;
+        s.twinkle += 0.015 * tick;
       }
     }
   }
