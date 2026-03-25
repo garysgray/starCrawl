@@ -426,6 +426,11 @@ button.active-speed
   transition: opacity 0.5s ease; 
 }
 
+.crawl-stage.active {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 640px)
 {

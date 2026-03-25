@@ -13,14 +13,21 @@ class Controller
       ()   => this.audio.playClick()
     );
     document.addEventListener('click', () => this.audio.resume(), { once: true });
+    
   }
 
   update(dt)
   {
+    this.updateScene(dt)
+    this.drawScene()
+  }
+
+  updateScene(dt)
+  {
     this.scene.update(dt);
   }
 
-  draw()
+  drawScene()
   {
     this.scene.draw();
   }
@@ -32,9 +39,5 @@ class Controller
     this.scene.crawl.setSpeed('fast');
     this.scene.stars.setMode('drift');
 
-    setTimeout(() =>
-    {
-      document.querySelector('.crawl-stage').style.opacity = '1';
-    }, 500);
   }
 }

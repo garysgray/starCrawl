@@ -34,6 +34,7 @@ class Crawl
 
     this._buildContent(this.defaultText);
     this._bindEditor();
+    //document.querySelector('.crawl-stage').classList.add('active');
   }
 
   // ---- Getters --------------------------------------------------------------
@@ -91,6 +92,7 @@ class Crawl
         this.yPos   = h;
         this._ready = true;
         this.content.style.opacity = '1';
+        document.querySelector('.crawl-stage').classList.add('active');
       }
       return;
     }

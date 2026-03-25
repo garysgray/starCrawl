@@ -1,7 +1,7 @@
-![Game Splash](assets/SpaceCrawl.png)
+![Game Splash](assets/StarCrawl.png)
 
 
-# Space Crawl
+# Star Crawl
 A Star Wars-inspired interactive space scene built with vanilla JavaScript and Canvas. Features a scrolling text crawl, animated starfield, and flyby spaceship.
 
 ---
