@@ -1,4 +1,4 @@
-![Game Splash](assets/StarCrawl.png)
+![Game Splash](assets/starCrawl.png)
 
 
 # Star Crawl
