@@ -55,7 +55,7 @@ body
 }
 
 /* ── Scene Layers ────────────────────────────────────────────── */
-#stars { position: fixed; inset: 0; z-index: 0; }
+
 
 #nebula
 {
@@ -76,13 +76,7 @@ body
   to   { opacity: 1.0; transform: scale(1.05); }
 }
 
-#ships
-{
-  position:       fixed;
-  inset:          0;
-  z-index:        2;
-  pointer-events: none;
-}
+
 
 #vignette
 {
@@ -429,6 +423,16 @@ button.active-speed
 .crawl-stage.active {
   opacity: 1;
   visibility: visible;
+}
+
+#stars { position: fixed; inset: 0; z-index: 0; }
+#planet { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+#ships
+{
+  position:       fixed;
+  inset:          0;
+  z-index:        3;
+  pointer-events: none;
 }
 
 /* ── Responsive ──────────────────────────────────────────────── */

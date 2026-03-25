@@ -27,3 +27,5 @@ const SHIP_TUNING =
   fadeOutZone: -999,   // % from top where fade begins
   fadeSpeed:   0.008,  // alpha reduction per tick
 };
+
+

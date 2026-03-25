@@ -2,7 +2,7 @@
 
 
 # Star Crawl
-A Star Wars-inspired interactive space scene built with vanilla JavaScript and Canvas. Features a scrolling text crawl, animated starfield, and flyby spaceship.
+A Star Wars-inspired interactive space scene built with vanilla JavaScript and Canvas. Features a scrolling text crawl, animated starfield, flyby spaceship, and a slowly rotating planet.
 
 ---
 
@@ -10,22 +10,26 @@ A Star Wars-inspired interactive space scene built with vanilla JavaScript and C
 ```
 /
 ├── index.html
+│
 ├── css/
 │   └── style.css
+│
 ├── data/
 │   └── crawl-text.js
+│
 └── js/
     ├── Main.js
     ├── Controller.js
     ├── Scene.js
     ├── StarField.js
-    ├── ShipConfig.js
+    ├── SceneConfig.js
     ├── Ship.js
     ├── ShipRenderer.js
     ├── SpaceAudio.js
     ├── Crawl.js
     ├── Timer.js
-    └── Hud.js
+    ├── Hud.js
+    └── PlanetRenderer.js
 ```
 
 ---
@@ -37,7 +41,7 @@ The project uses a fixed-timestep game loop pattern adapted from traditional gam
 
 **`Controller.js`** is infrastructure only — owns audio and HUD, holds the active Scene. It exposes `update(dt)` and `draw()` which the loop calls each frame.
 
-**`Scene.js`** owns everything visual and temporal — stars, ships, crawl, and spawn timing. A different scene defines a completely different visual experience while following the same contract.
+**`Scene.js`** owns everything visual and temporal — stars, ships, crawl, planet, and spawn timing. A different scene defines a completely different visual experience while following the same contract.
 
 Each system follows the same contract:
 - `update(dt)` — advances state, called at fixed 60hz timestep
@@ -56,11 +60,18 @@ Three modes driven by `starModes` config at the top of `StarField.js`:
 All magic numbers are consts at the top of the file. Speed is normalised against `STAR_BASE_H = 900` so behaviour is consistent across screen sizes.
 
 ### Scene / Ship / ShipRenderer / ShipConfig
-`Scene` owns everything visual — stars, crawl, and ship lifecycle. A `Timer` drives ship spawn intervals, switching between narrow and wide screen timings based on viewport width. All ship tuning values live in `ShipConfig.js`.
+`Scene` owns everything visual — stars, crawl, planet, and ship lifecycle. A `Timer` drives ship spawn intervals, switching between narrow and wide screen timings based on viewport width. All ship tuning values live in `ShipConfig.js`.
 
 `ShipRenderer` handles all canvas drawing in local ship coordinate space. All coordinates and colours are consts at the top of the file. `Scene` handles the world transform (position, scale, rotation, alpha) before calling the renderer each frame.
 
 Ship position is stored as `%` of screen dimensions so layout is resolution independent. Speed is normalised against `SHIP_BASE_H = 900` for consistent feel across screen sizes.
+
+### PlanetRenderer
+Renders a slowly rotating textured planet with optional rings. All tuning lives in the `PLANET_TUNING` object at the top of `PlanetRenderer.js` — no other file needs to be touched to restyle the planet.
+
+The planet texture is generated once at construction time onto an offscreen canvas, then projected slice-by-slice each frame to simulate a rotating sphere. Rings are drawn in two passes (back half before the planet, front half after) so the planet correctly occludes the ring plane.
+
+Low-level rendering constants (light colour, shadow colour, atmosphere radii defaults) live in `COSMETIC_CONFIG`. Resolution and projection constants live in `PHYSICS_CONFIG`.
 
 ### Crawl
 Parses plain text from `crawl-text.js` into DOM elements and scrolls them using a CSS 3D perspective transform. Supports titles (`#`), paragraph breaks, and spacers (`---`). Speed normalised against `CRAWL_BASE_H = 900`.
@@ -119,6 +130,94 @@ Edit the `starModes` object at the top of `StarField.js`:
 | `stretch` | Warp streak length |
 | `count` | Number of stars |
 
+### Planet (`PLANET_TUNING` in `PlanetRenderer.js`)
+
+**Position & motion**
+
+| Key | Description |
+|---|---|
+| `x` | Horizontal position as fraction of screen width |
+| `y` | Vertical position as fraction of screen height |
+| `scale` | Size multiplier applied to `PHYSICS_CONFIG.BASE_RADIUS` |
+| `tilt` | Axial tilt in radians |
+| `spinSpeed` | Rotation increment per tick |
+
+**Colours**
+
+| Key | Description |
+|---|---|
+| `baseColor` | Base fill colour of the texture |
+| `atmosColor` | Atmosphere glow colour (rgba) |
+| `atmosInnerRadius` | Glow start radius as multiplier of planet radius |
+| `atmosOuterRadius` | Glow end radius as multiplier of planet radius |
+
+**Surface bands**
+
+| Key | Description |
+|---|---|
+| `bandCount` | Number of dark latitude stripes (0 = none) |
+| `bandOpacityMin` | Alpha of the faintest band |
+| `bandOpacityMax` | Alpha of the darkest band |
+
+**Grit**
+
+| Key | Description |
+|---|---|
+| `gritCount` | Number of surface noise dots painted on the texture |
+
+**Craters**
+
+Craters are defined as an array of groups in `PLANET_TUNING.craters`. Each group is painted independently, so you can layer large sparse craters on top of dense small ones, or pin a group to a latitude zone. Falls back to flat `craterCount` / `craterMinR` / `craterMaxR` / `craterColor` props if the array is absent.
+
+| Key | Description |
+|---|---|
+| `count` | Number of craters in this group |
+| `minR` | Smallest crater radius in texture pixels |
+| `maxR` | Largest crater radius in texture pixels |
+| `color` | Pit fill colour |
+| `rimColor` | Highlight ring colour — set alpha to 0 to hide |
+| `depthColor` | Inner radial shadow colour for a 3-D bowl effect |
+| `latBand` | `[minFrac, maxFrac]` — constrains craters to a latitude strip. `0` = north pole, `1` = south pole. Omit to scatter across the whole surface. |
+
+Example with two groups:
+```js
+craters: [
+  {
+    count: 120, minR: 5, maxR: 20,
+    color: 'rgba(0,0,0,0.4)',
+    rimColor: 'rgba(255,255,255,0.12)',
+    depthColor: 'rgba(0,0,0,0.45)',
+  },
+  {
+    count: 40, minR: 3, maxR: 8,
+    color: 'rgba(0,0,0,0.3)',
+    rimColor: 'rgba(255,255,255,0.18)',
+    depthColor: 'rgba(0,0,0,0.35)',
+    latBand: [0.0, 0.25],  // north pole cap only
+  },
+],
+```
+
+**Rings**
+
+Rings are defined as an array in `PLANET_TUNING.rings`. Each entry is drawn independently — add as many as you like, or set to `[]` for none. Each ring is split into a back half (drawn before the planet) and a front half (drawn after) so the planet correctly occludes the ring plane.
+
+| Key | Description |
+|---|---|
+| `innerRadius` | Inner edge as a multiplier of planet radius |
+| `outerRadius` | Outer edge as a multiplier of planet radius |
+| `color` | Ring fill colour (rgba) — fades to transparent at both edges |
+| `tilt` | Ring plane tilt in radians. Defaults to `PLANET_TUNING.tilt` |
+| `scaleY` | Perspective squash. `0.1` = nearly edge-on, `0.5` = more face-on |
+
+Example with two rings:
+```js
+rings: [
+  { innerRadius: 1.35, outerRadius: 1.75, color: 'rgba(180,160,120,0.30)', tilt: 0.35 },
+  { innerRadius: 1.80, outerRadius: 2.05, color: 'rgba(130,110,80,0.18)',  tilt: 0.35 },
+],
+```
+
 ### Crawl appearance
 CSS custom properties at the top of `style.css` control the crawl geometry:
 
@@ -149,6 +248,7 @@ Constants at the top of `Hud.js`:
 - Speed normalised against BASE_H = 900 so behaviour is consistent across screen sizes
 - Position stored as % of screen so layout is resolution independent
 - Scripts loaded in dependency order in index.html — no modules, no imports
+- Planet texture is generated once at construction; call `new PlanetRenderer()` again to reseed
 
 ---
 
@@ -158,8 +258,7 @@ Constants at the top of `Hud.js`:
 3. **Transition system** — fade between states
 4. **EventBus + ScrollClock** — cue-based ship spawning at dramatic crawl moments
 5. **Second scene** — FlyoverScene or similar, same update/draw contract
-6. **PlanetRenderer** — slow rotating planet owned by Scene
-7. **Second ship type** — new ShipRenderer, random or cue-driven selection
+6. **Second ship type** — new ShipRenderer, random or cue-driven selection
 
 ---
 

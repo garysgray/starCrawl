@@ -14,9 +14,14 @@ class Scene
     this.stars  = new StarField();
     this.crawl  = new Crawl(audio);
     this.ships  = [];
+
     this.canvas = document.getElementById('ships');
     this.ctx    = this.canvas.getContext('2d');
     this.renderer = new ShipRenderer();
+
+    this.planetCanvas   = document.getElementById('planet');
+    this.planetCtx      = this.planetCanvas.getContext('2d');
+    this.planetRenderer = new PlanetRenderer();
 
     // Spawn timer — initial delay before first ship
     this.spawnTimer = new Timer('ShipSpawner', 45, timerModes.COUNTDOWN, false);
@@ -31,8 +36,10 @@ class Scene
   // ---- Setup ----------------------------------------------------------------
   _resize()
   {
-    this.canvas.width  = window.innerWidth;
-    this.canvas.height = window.innerHeight;
+    this.canvas.width        = window.innerWidth;
+    this.canvas.height       = window.innerHeight;
+    this.planetCanvas.width  = window.innerWidth;
+    this.planetCanvas.height = window.innerHeight;
   }
 
   // ---- Spawning -------------------------------------------------------------
@@ -68,6 +75,8 @@ class Scene
     // Timer-based spawning
     if (this.spawnTimer.update(dt)) this._handleSpawnTick();
 
+    this.planetRenderer.rotation += PLANET_TUNING.spinSpeed * (dt || 1);
+
     // Update ships
     for (let i = this.ships.length - 1; i >= 0; i--)
     {
@@ -80,18 +89,37 @@ class Scene
   draw()
   {
     this.stars.draw();
+    this._drawPlanet();
+    this._drawShips();
+    this.crawl.draw();
+  }
 
-    // Draw ships
+  _drawPlanet()
+  {
+    const ctx = this.planetCtx;
+    const w   = this.planetCanvas.width;
+    const h   = this.planetCanvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.save();
+    ctx.translate(PLANET_TUNING.x * w, PLANET_TUNING.y * h);  // % position like ships
+    ctx.scale(PLANET_TUNING.scale, PLANET_TUNING.scale);
+    this.planetRenderer.draw(ctx);
+    ctx.restore();
+  }
+
+  _drawShips()
+  {
     const { ctx, canvas } = this;
     const w = canvas.width;
     const h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
 
+    ctx.clearRect(0, 0, w, h);
     for (let i = 0; i < this.ships.length; i++)
     {
       const s     = this.ships[i];
-      const drawX = (s.xPct / 100) * w;
-      const drawY = (s.yPct / 100) * h;
+      const drawX = (s.xPct / PCT_DIVISOR) * w;
+      const drawY = (s.yPct / PCT_DIVISOR) * h;
       const scale = s.getScale(w, SHIP_TUNING);
 
       ctx.save();
@@ -102,7 +130,5 @@ class Scene
       this.renderer.draw(ctx);
       ctx.restore();
     }
-
-    this.crawl.draw();
   }
 }
