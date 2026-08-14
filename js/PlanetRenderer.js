@@ -134,13 +134,36 @@ const PLANET_TUNING = {
 
 // ── 3. PLANET RENDERER ──────────────────────────────────────────────────────
 
-class PlanetRenderer {
-    constructor() {
+class PlanetRenderer 
+{
+        constructor() {
         this.lightX   = 0.5;
         this.lightY   = -0.25;
         this.rotation = 0;
         this.map      = this._createInternalMap();
+
+        const r = PHYSICS_CONFIG.BASE_RADIUS * (PLANET_TUNING.scale || 0.5);
+
+        // 1. Create the offscreen pixel buffer canvas
+        this.bufferCanvas        = document.createElement('canvas');
+        this.bufferCanvas.width  = r * 2;
+        this.bufferCanvas.height = r * 2;
+        this.bufferCtx           = this.bufferCanvas.getContext('2d');
+
+        // 2. Pre-compute the 120-slice trigonometry loops once
+        this.sliceCache = [];
+        const step = (r * 2) / PHYSICS_CONFIG.SLICE_COUNT;
+        const mapW = PHYSICS_CONFIG.TEXTURE_WIDTH;
+
+        for (let i = 0; i < PHYSICS_CONFIG.SLICE_COUNT; i++) {
+            const sx       = -r + (i * step);
+            const angle    = Math.asin(sx / r); // Isolated here permanently
+            const txOffset = ((angle + Math.PI / 2) / Math.PI) * (mapW / 2);
+
+            this.sliceCache.push({ sx, txOffset, step });
+        }
     }
+
 
     // ── Texture map ──────────────────────────────────────────────────────────
 
@@ -240,35 +263,48 @@ class PlanetRenderer {
 
     // ── Main draw call ───────────────────────────────────────────────────────
 
-    draw(ctx, canvasW, canvasH) {
+        draw(ctx, canvasW, canvasH) {
         const r  = PHYSICS_CONFIG.BASE_RADIUS * (PLANET_TUNING.scale || 0.5);
         const px = canvasW  * (PLANET_TUNING.x || 0.75);
         const py = canvasH  * (PLANET_TUNING.y || 0.8);
 
+        // 1. Clear the offscreen buffer for this frame's calculations
+        this.bufferCtx.clearRect(0, 0, this.bufferCanvas.width, this.bufferCanvas.height);
+
+        // 2. Setup the buffer context center origin point
+        this.bufferCtx.save();
+        this.bufferCtx.translate(r, r);
+
+        // 3. Assemble the planet components completely offscreen
+        this._drawSphereBase(this.bufferCtx, r);
+
+        this.bufferCtx.save();
+        this.bufferCtx.rotate(PLANET_TUNING.tilt || 0);
+        this._drawSurfaceTexture(this.bufferCtx, r); // Now runs with 0 trig math
+        this.bufferCtx.restore();
+
+        this._drawShadowOverlay(this.bufferCtx, r);
+        this.bufferCtx.addAtmosGlow = this._drawAtmosphereGlow(this.bufferCtx, r);
+        
+        this.bufferCtx.restore();
+
+        // 4. Draw the rings and the finished planet onto the main player canvas
         ctx.save();
         ctx.translate(px, py);
 
         const rings = PLANET_TUNING.rings || [];
-
-        // 1. Back half of each ring (draws behind the planet)
+        // Back rings behind planet
         rings.forEach(rg => this._drawRingHalf(ctx, r, rg, 'back'));
 
-        // 2. Full planet
-        this._drawSphereBase(ctx, r);
+        // Copy the entirely finished offscreen planet image in ONE fast call
+        ctx.drawImage(this.bufferCanvas, -r, -r);
 
-        ctx.save();
-        ctx.rotate(PLANET_TUNING.tilt || 0);
-        this._drawSurfaceTexture(ctx, r);
-        ctx.restore();
-
-        this._drawShadowOverlay(ctx, r);
-        this._drawAtmosphereGlow(ctx, r);
-
-        // 3. Front half of each ring (draws in front of the planet)
+        // Front rings overlaying planet
         rings.forEach(rg => this._drawRingHalf(ctx, r, rg, 'front'));
 
         ctx.restore();
     }
+
 
     // ── Sphere base ──────────────────────────────────────────────────────────
 
@@ -285,7 +321,7 @@ class PlanetRenderer {
 
     // ── Surface texture ──────────────────────────────────────────────────────
 
-    _drawSurfaceTexture(ctx, r) {
+        _drawSurfaceTexture(ctx, r) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(0, 0, r * 0.995, 0, Math.PI * 2);
@@ -293,24 +329,24 @@ class PlanetRenderer {
 
         const mapW    = this.map.width;
         const scrollX = (this.rotation % (Math.PI * 2)) * (mapW / (Math.PI * 2));
-        const step    = (r * 2) / PHYSICS_CONFIG.SLICE_COUNT;
 
-        for (let i = 0; i < PHYSICS_CONFIG.SLICE_COUNT; i++) {
-            const sx     = -r + (i * step);
-            const angle  = Math.asin(sx / r);
-            const tx     = ((angle + Math.PI / 2) / Math.PI) * (mapW / 2) + scrollX;
-            const safeTX = tx % (mapW - 1);
+        // FAST LOOKUP LOOP: Drawing to buffer with zero trigonometry calculations
+        for (let i = 0; i < this.sliceCache.length; i++) {
+            const slice  = this.sliceCache[i];
+            const safeTX = (slice.txOffset + scrollX) % (mapW - 1);
 
             ctx.drawImage(
                 this.map,
                 safeTX, 0, 1, this.map.height,
-                sx, -r * (PHYSICS_CONFIG.MAP_STRETCH_MULT / 2),
-                step + PHYSICS_CONFIG.SLICE_OVERLAP,
+                slice.sx, -r * (PHYSICS_CONFIG.MAP_STRETCH_MULT / 2),
+                slice.step + PHYSICS_CONFIG.SLICE_OVERLAP,
                 r * PHYSICS_CONFIG.MAP_STRETCH_MULT
             );
         }
         ctx.restore();
     }
+
+
 
     // ── Shadow / terminator ───────────────────────────────────────────────────
 

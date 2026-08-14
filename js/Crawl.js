@@ -52,12 +52,17 @@ class Crawl
 
   // ---- Content --------------------------------------------------------------
   // Parses plain text into crawl paragraphs and spacers
+  // ---- Content ──────────────────────────────────────────────────────────────
+  // Parses plain text into crawl paragraphs and spacers
   _buildContent(text)
   {
-    this.content.innerHTML = '';
+    // Clear out old text safely without using innerHTML
+    while (this.content.firstChild) {
+      this.content.removeChild(this.content.firstChild);
+    }
+
     text.trim().split(/\n\s*\n/).forEach((para) =>
     {
-      // '---' becomes a tall spacer gap between segments
       if (para.trim() === '---')
       {
         const spacer        = document.createElement('div');
@@ -66,19 +71,19 @@ class Crawl
         return;
       }
       const p = document.createElement('p');
-      // Lines starting with '#' become large centered titles
       if (para.startsWith('#'))
       {
         p.className   = 'crawl-title';
-        p.textContent = para.slice(1).trim();
+        p.textContent = para.slice(1).trim(); // Pure text - 100% secure
       }
       else
       {
-        p.textContent = para.trim();
+        p.textContent = para.trim(); // Pure text - 100% secure
       }
       this.content.appendChild(p);
     });
   }
+
 
   // ---- Loop -----------------------------------------------------------------
   // Advances scroll position — called by the main game loop each frame

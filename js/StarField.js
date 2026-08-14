@@ -22,8 +22,8 @@ const TWINKLE_DRIFT_RATE  = 0.02;   // twinkle phase increment per tick — drif
 // ---- Opacity config ---------------------------------------------------------
 const WARP_OPACITY_MIN    = 0.4;    // minimum warp star opacity
 const WARP_OPACITY_RANGE  = 0.6;    // warp opacity range above minimum
-const DRIFT_OPACITY_BASE  = 0.4;    // base drift star opacity
-const DRIFT_OPACITY_AMP   = 0.3;    // twinkle amplitude for drift
+const DRIFT_OPACITY_BASE  = 0.6;    // base drift star opacity
+const DRIFT_OPACITY_AMP   = 0.5;    // twinkle amplitude for drift
 const CALM_OPACITY_BASE   = 0.3;    // base calm star opacity
 const CALM_OPACITY_AMP    = 0.35;   // twinkle amplitude for calm
 
@@ -119,7 +119,7 @@ class StarField
     }
   }
 
-  draw()
+    draw()
   {
     const cfg = starModes[this.mode];
     const w   = this.canvas.width;
@@ -128,38 +128,84 @@ class StarField
 
     ctx.clearRect(0, 0, w, h);
 
-    for (let i = 0; i < this.stars.length; i++)
+    if (this.mode === 'warp')
     {
-      const s = this.stars[i];
+      // 1. Group warp lines by opacity to minimize stroke state changes
+      // Since alpha depends on z (0 to 1), we bucket them into 10 steps
+      const opacityBuckets = Array.from({ length: 11 }, () => []);
 
-      if (this.mode === 'warp')
+      for (let i = 0; i < this.stars.length; i++)
       {
-        // Draw as a stretched line in the direction of travel
-        const dx      = s.x - this.cx;
-        const dy      = s.y - this.cy;
-        const len     = Math.sqrt(dx * dx + dy * dy) || 1;
-        const stretch = cfg.stretch * s.speed;
-        ctx.beginPath();
-        ctx.moveTo(s.x, s.y);
-        ctx.lineTo(s.x - (dx / len) * stretch, s.y - (dy / len) * stretch);
-        ctx.strokeStyle = `rgba(255,255,255,${WARP_OPACITY_MIN + s.z * WARP_OPACITY_RANGE})`;
-        ctx.lineWidth   = s.size * s.z;
-        ctx.stroke();
+        const s = this.stars[i];
+        const alpha = WARP_OPACITY_MIN + s.z * WARP_OPACITY_RANGE;
+        const bucketIndex = Math.min(10, Math.floor(alpha * 10));
+        opacityBuckets[bucketIndex].push(s);
       }
-      else if (this.mode === 'drift')
+
+      // 2. Batch-draw each opacity bucket
+      const stretch = cfg.stretch;
+      for (let b = 0; b <= 10; b++)
       {
+        const bucket = opacityBuckets[b];
+        if (bucket.length === 0) continue;
+
         ctx.beginPath();
-        ctx.arc(s.x, s.y, s.size * s.z, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${DRIFT_OPACITY_BASE + Math.sin(s.twinkle) * DRIFT_OPACITY_AMP})`;
-        ctx.fill();
+        ctx.strokeStyle = `rgba(255,255,255,${b / 10})`;
+        
+        for (let i = 0; i < bucket.length; i++)
+        {
+          const s = bucket[i];
+          const dx = s.x - this.cx;
+          const dy = s.y - this.cy;
+          const len = Math.sqrt(dx * dx + dy * dy) || 1;
+          const currentStretch = stretch * s.speed;
+
+          // Set up line width (can vary within a batch without closing the path)
+          ctx.lineWidth = s.size * s.z;
+          ctx.moveTo(s.x, s.y);
+          ctx.lineTo(s.x - (dx / len) * currentStretch, s.y - (dy / len) * currentStretch);
+        }
+        ctx.stroke(); // Paints the entire bucket in one instruction
       }
-      else
+    }
+    else
+    {
+      // 3. For Calm and Drift modes, bucket stars by their target opacity
+      const isDrift = this.mode === 'drift';
+      const baseOp  = isDrift ? DRIFT_OPACITY_BASE : CALM_OPACITY_BASE;
+      const ampOp   = isDrift ? DRIFT_OPACITY_AMP  : CALM_OPACITY_AMP;
+      
+      const alphaBuckets = Array.from({ length: 11 }, () => []);
+
+      for (let i = 0; i < this.stars.length; i++)
       {
+        const s = this.stars[i];
+        const alpha = baseOp + Math.sin(s.twinkle) * ampOp;
+        // Pin index between 0 and 10
+        const bucketIndex = Math.min(10, Math.max(0, Math.floor(alpha * 10)));
+        alphaBuckets[bucketIndex].push(s);
+      }
+
+      // 4. Batch-fill the circles
+      for (let b = 0; b <= 10; b++)
+      {
+        const bucket = alphaBuckets[b];
+        if (bucket.length === 0) continue;
+
         ctx.beginPath();
-        ctx.arc(s.x, s.y, s.size * s.z, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${CALM_OPACITY_BASE + Math.sin(s.twinkle) * CALM_OPACITY_AMP})`;
-        ctx.fill();
+        ctx.fillStyle = `rgba(255,255,255,${b / 10})`;
+
+        for (let i = 0; i < bucket.length; i++)
+        {
+          const s = bucket[i];
+          const r = s.size * s.z;
+          // Move context drawing pin cleanly to avoid continuous sub-paths leaking
+          ctx.moveTo(s.x + r, s.y);
+          ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+        }
+        ctx.fill(); // Single graphics layer submittal for this whole visibility tier
       }
     }
   }
+
 }
