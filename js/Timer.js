@@ -1,5 +1,5 @@
 // ============================================================================
-// TIMER CLASS (Cleaned)
+// TIMER CLASS (Cleaned & Normalized)
 // ============================================================================
 
 class Timer
@@ -82,14 +82,17 @@ class Timer
     {
         if (!this.#active) return false;
 
+        // FIX: Convert the normalized 60Hz frame tick multiplier (1.0) into actual seconds
+        const realSecondsPassed = delta * (1 / 60);
+
         return this.#mode === timerModes.COUNTDOWN
-            ? this.#updateCountdown(delta)
-            : this.#updateCountup(delta);
+            ? this.#updateCountdown(realSecondsPassed)
+            : this.#updateCountup(realSecondsPassed);
     }
 
-    #updateCountdown(delta)
+    #updateCountdown(secondsPassed)
     {
-        this.#timeLeft -= delta;
+        this.#timeLeft -= secondsPassed;
 
         if (this.#timeLeft > 0) return false;
 
@@ -105,9 +108,9 @@ class Timer
         return true;
     }
 
-    #updateCountup(delta)
+    #updateCountup(secondsPassed)
     {
-        this.#elapsedTime += delta;
+        this.#elapsedTime += secondsPassed;
 
         if (!this.#loop || this.#duration <= 0) return false;
         if (this.#elapsedTime < this.#duration) return false;

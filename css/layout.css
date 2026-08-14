@@ -1,0 +1,265 @@
+/* ── Layout & Variables ───────────────────────────────────────── */
+:root
+{
+  /* Crawl geometry configuration */
+  --crawl-perspective : 1500px;
+  --crawl-pitch       : 40deg;
+  --crawl-width       : 60%;
+  --crawl-vanish-x    : 50%;
+  --crawl-vanish-y    : 160%;
+
+  /* Miscellaneous spacing boundaries */
+  --radius-sm         : 4px;
+  --radius-md         : 8px;
+
+  /* HUD Structural variables — isolates layout computation states */
+  --hud-direction     : row;
+  --hud-width         : auto;
+  --hud-padding       : 12px 18px;
+  --hud-gap           : 0px;
+  --hud-divider-w     : 1px;
+  --hud-divider-h     : auto;
+}
+
+/* ── Global Document Canvas Reset ────────────────────────────── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body
+{
+  overflow:    hidden;
+  height:      100vh;
+  width:       100vw;
+}
+
+/* ── Fixed Scene Layers ──────────────────────────────────────── */
+#stars 
+{ 
+  position: fixed; 
+  inset: 0; 
+  z-index: 0; 
+  will-change: transform;
+}
+
+#nebula
+{
+  position:       fixed;
+  inset:          0;
+  z-index:        1;
+  pointer-events: none;
+  animation:      nebula-shift 30s ease-in-out infinite alternate;
+  will-change:    transform, opacity;
+}
+
+@keyframes nebula-shift
+{
+  from { opacity: 0.7; transform: scale(1);    }
+  to   { opacity: 1.0; transform: scale(1.05); }
+}
+
+#planet 
+{ 
+  position: fixed; 
+  inset: 0; 
+  z-index: 2; 
+  pointer-events: none; 
+}
+
+#ships
+{
+  position:       fixed;
+  inset:          0;
+  z-index:        3;
+  pointer-events: none;
+}
+
+#vignette
+{
+  position:       fixed;
+  inset:          0;
+  z-index:        8;
+  pointer-events: none;
+}
+
+#noise
+{
+  position:       fixed;
+  inset:          0;
+  z-index:        9;
+  pointer-events: none;
+}
+
+/* ── 3D Text Crawl Container Stage ───────────────────────────── */
+.crawl-stage
+{
+  position:       fixed;
+  inset:          0;
+  z-index:        10;
+  pointer-events: none;
+  overflow:       hidden;
+  opacity:        0;
+  transition:     opacity 0.5s ease;
+  -webkit-mask-image: linear-gradient(to bottom,
+    transparent  0%,
+    transparent 20%,
+    black       35%,
+    black       85%,
+    transparent 100%);
+  mask-image: linear-gradient(to bottom,
+    transparent  0%,
+    transparent 20%,
+    black       35%,
+    black       85%,
+    transparent 100%);
+}
+
+.crawl-stage.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.crawl-perspective
+{
+  position:           absolute;
+  bottom:             0;
+  left:               0;
+  width:              100%;
+  height:             100%;
+  perspective:        var(--crawl-perspective);
+  perspective-origin: var(--crawl-vanish-x) var(--crawl-vanish-y);
+}
+
+.crawl-content
+{
+  position:        absolute;
+  bottom:          0;
+  left:            50%;
+  width:           var(--crawl-width);
+  transform-origin: 50% 100%;
+  transform:       translateX(-50%) rotateX(var(--crawl-pitch));
+  text-align:      justify;
+  padding-bottom:  5vh;
+  will-change:     transform;
+}
+
+/* ── Interactive Head-Up Display Layout ──────────────────────── */
+.HUD
+{
+  position:        fixed;
+  bottom:          70px;
+  left:            50%;
+  transform:       translateX(-50%) translateY(12px);
+  z-index:         90;
+  display:         flex;
+  align-items:     center;
+  flex-direction:  var(--hud-direction);
+  width:           var(--hud-width);
+  padding:         var(--hud-padding);
+  gap:             var(--hud-gap);
+  opacity:         0;
+  will-change:     transform, opacity;
+}
+
+.control-group
+{
+  display:        flex;
+  flex-direction: column;
+  gap:            7px;
+  align-items:    center;
+  padding:        0 14px;
+}
+
+.btn-row { display: flex; gap: 4px; }
+
+.hud-divider
+{
+  width:       var(--hud-divider-w);
+  height:      var(--hud-divider-h);
+  align-self:  stretch;
+  flex-shrink: 0;
+}
+
+/* ── Content Text Editor Overlay Placement ──────────────────── */
+.editor-overlay
+{
+  position:        fixed;
+  inset:           0;
+  z-index:         100;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  opacity:         0;
+  pointer-events:  none;
+  transition:      opacity 0.3s ease;
+}
+
+.editor-overlay.open { opacity: 1; pointer-events: auto; }
+
+.editor-box
+{
+  width:    min(600px, 90vw);
+  overflow: hidden;
+}
+
+.editor-header
+{
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         14px 18px;
+}
+
+#crawl-editor
+{
+  width:  100%;
+  height: 300px;
+  outline: none;
+  resize:  none;
+  padding: 18px;
+}
+
+.editor-footer
+{
+  display:         flex;
+  gap:             8px;
+  justify-content: flex-end;
+  padding:         12px 18px;
+}
+
+.editor-help
+{
+  display:        none;
+  padding:        12px 18px;
+  gap:            8px;
+  flex-direction: column;
+}
+
+.editor-help.open { display: flex; }
+
+/* ── Mobile Responsive Compositor Shifting ───────────────────── */
+@media (max-width: 640px)
+{
+  :root
+  {
+    --crawl-width   : 92%;
+    --crawl-pitch   : 30deg;
+
+    /* Swaps mobile properties via compositor layer to prevent layout engine reflows */
+    --hud-direction : column;
+    --hud-width     : calc(100vw - 32px);
+    --hud-padding   : 14px 16px;
+    --hud-gap       : 10px;
+    --hud-divider-w : 100%;
+    --hud-divider-h : 1px;
+  }
+
+  .control-group
+  {
+    width:           100%;
+    flex-direction:  row;
+    justify-content: space-between;
+    align-items:     center;
+    padding:         0;
+  }
+
+  .btn-row { gap: 6px; }
+}

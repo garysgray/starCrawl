@@ -263,7 +263,8 @@ class PlanetRenderer
 
     // ── Main draw call ───────────────────────────────────────────────────────
 
-        draw(ctx, canvasW, canvasH) {
+    draw(ctx, canvasW, canvasH) 
+    {
         const r  = PHYSICS_CONFIG.BASE_RADIUS * (PLANET_TUNING.scale || 0.5);
         const px = canvasW  * (PLANET_TUNING.x || 0.75);
         const py = canvasH  * (PLANET_TUNING.y || 0.8);
@@ -308,7 +309,8 @@ class PlanetRenderer
 
     // ── Sphere base ──────────────────────────────────────────────────────────
 
-    _drawSphereBase(ctx, r) {
+    _drawSphereBase(ctx, r) 
+    {
         const lx   = r * this.lightX, ly = r * this.lightY;
         const grad = ctx.createRadialGradient(lx, ly, r * 0.1, 0, 0, r);
         grad.addColorStop(0, COSMETIC_CONFIG.SUN_HIGHLIGHT);
@@ -321,7 +323,8 @@ class PlanetRenderer
 
     // ── Surface texture ──────────────────────────────────────────────────────
 
-        _drawSurfaceTexture(ctx, r) {
+    _drawSurfaceTexture(ctx, r) 
+    {
         ctx.save();
         ctx.beginPath();
         ctx.arc(0, 0, r * 0.995, 0, Math.PI * 2);

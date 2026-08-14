@@ -71,7 +71,12 @@ function gameLoop()
   // Hit step cap — discard leftover to prevent runaway accumulator
   if (steps >= MAX_STEPS) accumulator = 0;
 
-  myController.drawScene();
+  // 1. Calculate the interpolation fraction (where we are between physics ticks)
+  const alpha = accumulator / FIXED_TIMESTEP;
+
+  // 2. Pass alpha straight to the draw controller
+  myController.drawScene(alpha);
 
   requestAnimationFrame(gameLoop);
+
 }

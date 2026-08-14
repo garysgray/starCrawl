@@ -20,6 +20,9 @@ class HUD
     this.onStarMode    = onStarMode;
     this.onClickSound  = onClickSound;
 
+    // FIX: Lock a single, permanent function reference into memory at bootup
+    this._boundShow    = this._show.bind(this);
+
     this._bindButtons();
     this._initAutoHide();
   }
@@ -59,9 +62,12 @@ class HUD
       requestAnimationFrame(() =>
       {
         this._show();
-        document.addEventListener('mousemove',  () => this._show());
-        document.addEventListener('touchstart', () => this._show());
-        document.addEventListener('touchmove',  () => this._show());
+        
+        // FIX: Point event listeners directly to the permanent memory slot.
+        // Moving the mouse across the screen now runs with zero new memory allocations.
+        document.addEventListener('mousemove',  this._boundShow);
+        document.addEventListener('touchstart', this._boundShow);
+        document.addEventListener('touchmove',  this._boundShow);
       });
     });
   }

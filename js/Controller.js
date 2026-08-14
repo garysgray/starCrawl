@@ -26,9 +26,9 @@ class Controller
     this.scene.update(dt);
   }
 
-  drawScene()
+  drawScene(alpha)
   {
-    this.scene.draw();
+    this.scene.draw(alpha);
   }
 
   start()

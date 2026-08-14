@@ -24,10 +24,8 @@ class Scene
     this.planetRenderer = new PlanetRenderer();
 
     // Spawn timer — initial delay before first ship
-    this.spawnTimer = new Timer('ShipSpawner', 45, timerModes.COUNTDOWN, false);
+    this.spawnTimer = new Timer('ShipSpawner', 5, timerModes.COUNTDOWN, false);
     this.spawnTimer.start();
-
- 
 
     this._resize();
     window.addEventListener('resize', () => this._resize());
@@ -52,8 +50,6 @@ class Scene
 
   _spawnShip()
   {
-    //console.log("i spawned");
-    //console.log(this.ships.length );
     if (this.ships.length > 0) return;
     this.ships.push(new Ship(SHIP_TUNING.spawnX, SHIP_TUNING.spawnY));
   }
@@ -86,14 +82,17 @@ class Scene
     }
   }
 
-  draw()
+  // 1. UPDATED: Accepts the sub-frame timing 'alpha' fraction from the controller
+  draw(alpha)
   {
-    this.stars.draw();
+    this.stars.draw(alpha);
     this._drawPlanet();
-    this._drawShips();
-    this.crawl.draw();
+    this._drawShips(alpha); // Passes alpha down to smooth out ship motion
+    this.crawl.draw(alpha);
   }
 
+  // 2. FIXED POSITION BUG: Stripped out redundant translate/scale actions.
+  // The optimized PlanetRenderer handles its own positioning transformations internally.
   _drawPlanet()
   {
     const ctx = this.planetCtx;
@@ -101,14 +100,13 @@ class Scene
     const h   = this.planetCanvas.height;
 
     ctx.clearRect(0, 0, w, h);
-    ctx.save();
-    ctx.translate(PLANET_TUNING.x * w, PLANET_TUNING.y * h);  // % position like ships
-    ctx.scale(PLANET_TUNING.scale, PLANET_TUNING.scale);
-    this.planetRenderer.draw(ctx);
-    ctx.restore();
+    
+    // Pass context alongside the width/height parameters so PlanetRenderer calculates offsets cleanly
+    this.planetRenderer.draw(ctx, w, h);
   }
 
-  _drawShips()
+  // 3. UPDATED: Leverages alpha interpolation to slide ship rendering vectors
+    _drawShips(alpha)
   {
     const { ctx, canvas } = this;
     const w = canvas.width;
@@ -117,18 +115,31 @@ class Scene
     ctx.clearRect(0, 0, w, h);
     for (let i = 0; i < this.ships.length; i++)
     {
-      const s     = this.ships[i];
-      const drawX = (s.xPct / PCT_DIVISOR) * w;
-      const drawY = (s.yPct / PCT_DIVISOR) * h;
-      const scale = s.getScale(w, SHIP_TUNING);
+      const s = this.ships[i];
+      
+      // FIX: Establish the screen scale variable cleanly on its own line
+      const screenScale = SHIP_BASE_H / window.innerHeight;
+      const currentSpeed  = SHIP_TUNING.speed * screenScale;
+      const currentDriftX = SHIP_TUNING.driftX * screenScale;
+      
+      // Interpolate percentage variables safely between clock ticks
+      const interpolatedYPct = s.yPct - (currentSpeed * alpha * (FIXED_TIMESTEP || 1/60));
+      const interpolatedXPct = s.xPct + (currentDriftX * alpha * (FIXED_TIMESTEP || 1/60));
+
+      const drawX = (interpolatedXPct / PCT_DIVISOR) * w;
+      const drawY = (interpolatedYPct / PCT_DIVISOR) * h;
+      
+      // Pass the canvas width down to get your native size layout
+      const finalScale = s.getScale(w, SHIP_TUNING);
 
       ctx.save();
       ctx.translate(drawX, drawY);
-      ctx.scale(scale, scale * SHIP_TUNING.flattenY);
+      ctx.scale(finalScale, finalScale * SHIP_TUNING.flattenY);
       ctx.rotate(Math.PI * SHIP_TUNING.rotation);
       ctx.globalAlpha = s.alpha;
       this.renderer.draw(ctx);
       ctx.restore();
     }
   }
+
 }

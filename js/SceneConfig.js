@@ -1,11 +1,10 @@
 
 const SHIP_INTERVAL =
 {
-  narrow:     20000,
-  wide:       45000,
+  narrow:     8000,   // 8 seconds between ships on mobile
+  wide:       12000,  // 12 seconds between ships on desktop (down from 45)
   breakpoint: 1024
 };
-
 
 const SHIP_TUNING = 
 {

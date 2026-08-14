@@ -34,7 +34,6 @@ class Crawl
 
     this._buildContent(this.defaultText);
     this._bindEditor();
-    //document.querySelector('.crawl-stage').classList.add('active');
   }
 
   // ---- Getters --------------------------------------------------------------
@@ -50,8 +49,6 @@ class Crawl
       .getPropertyValue('--crawl-pitch').trim();
   }
 
-  // ---- Content --------------------------------------------------------------
-  // Parses plain text into crawl paragraphs and spacers
   // ---- Content ──────────────────────────────────────────────────────────────
   // Parses plain text into crawl paragraphs and spacers
   _buildContent(text)
@@ -84,9 +81,8 @@ class Crawl
     });
   }
 
-
   // ---- Loop -----------------------------------------------------------------
-  // Advances scroll position — called by the main game loop each frame
+  // Advances scroll position — called by the main game loop each frame (60Hz)
   update(dt)
   {
     if (!this._ready)
@@ -106,19 +102,29 @@ class Crawl
 
     // Normalise to base screen height so scroll speed is consistent across screens
     const scale = CRAWL_BASE_H / window.innerHeight;
+    
+    // FIX: This strictly modifies raw numbers now — DOM styling calculations removed from 60Hz loop
     this.yPos  -= this._getSpeed() * dt * scale;
 
     // Reset to bottom once all content has scrolled off the top
     if (this.yPos < -(window.innerHeight * CRAWL_RESET_MULT))
       this.yPos = this.content.scrollHeight;
-
-    const pitch = this._getPitch();
-    this.content.style.transform =
-      `translateX(-50%) rotateX(${pitch}) translateY(${this.yPos}px)`;
   }
 
-  // CSS handles all crawl rendering — nothing to paint here
-  draw() {}
+  // FIX: Added 'alpha' to smoothly interpolate text rendering positions between ticks
+  draw(alpha) 
+  {
+    if (!this._ready || !this.running) return;
+
+    const scale = CRAWL_BASE_H / window.innerHeight;
+    const pitch = this._getPitch();
+    
+    // Estimate sub-frame positioning to completely match the monitor refresh rate
+    const interpolatedY = this.yPos - (this._getSpeed() * (alpha || 0) * scale);
+
+    this.content.style.transform =
+      `translateX(-50%) rotateX(${pitch}) translateY(${interpolatedY}px)`;
+  }
 
   // ---- Public ---------------------------------------------------------------
   setSpeed(speed)

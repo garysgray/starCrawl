@@ -35,7 +35,6 @@ class SpaceAudio
   // Builds a looping filtered noise drone with a slow LFO volume swell
   _buildDrone()
   {
-    // White noise buffer as source material
     const bufSize = this.ctx.sampleRate * DRONE_BUF_SECS;
     const buf     = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
     const data    = buf.getChannelData(0);
@@ -46,7 +45,6 @@ class SpaceAudio
     src.buffer = buf;
     src.loop   = true;
 
-    // Two bandpass filters sculpt the noise into low rumble + mid presence
     const filter           = this.ctx.createBiquadFilter();
     filter.type            = 'bandpass';
     filter.frequency.value = DRONE_FILTER1_FREQ;
@@ -57,11 +55,9 @@ class SpaceAudio
     filter2.frequency.value = DRONE_FILTER2_FREQ;
     filter2.Q.value         = DRONE_FILTER2_Q;
 
-    // Master gain — starts silent, fades in after delay
     const gain      = this.ctx.createGain();
     gain.gain.value = 0;
 
-    // Slow LFO modulates volume for a breathing effect
     const lfo           = this.ctx.createOscillator();
     lfo.type            = 'sine';
     lfo.frequency.value = DRONE_LFO_FREQ;
@@ -69,8 +65,6 @@ class SpaceAudio
     const lfoGain      = this.ctx.createGain();
     lfoGain.gain.value = DRONE_LFO_DEPTH;
 
-    // Signal chain: noise → filter → filter2 → gain → output
-    //               lfo → lfoGain → gain.gain (modulation)
     lfo.connect(lfoGain);
     lfoGain.connect(gain.gain);
     src.connect(filter);
@@ -81,7 +75,6 @@ class SpaceAudio
     src.start();
     lfo.start();
 
-    // Fade drone in smoothly after delay
     gain.gain.setTargetAtTime(
       DRONE_GAIN_TARGET,
       this.ctx.currentTime + DRONE_FADE_DELAY,
@@ -97,7 +90,6 @@ class SpaceAudio
   {
     const now = this.ctx.currentTime;
 
-    // Short white noise buffer
     const buf  = this.ctx.createBuffer(1, this.ctx.sampleRate * CLICK_BUF_SECS, this.ctx.sampleRate);
     const data = buf.getChannelData(0);
     for (let i = 0; i < data.length; i++)
@@ -106,12 +98,10 @@ class SpaceAudio
     const src  = this.ctx.createBufferSource();
     src.buffer = buf;
 
-    // Highpass keeps only the crisp top end of the noise
     const filter           = this.ctx.createBiquadFilter();
     filter.type            = 'highpass';
     filter.frequency.value = CLICK_FILTER_FREQ;
 
-    // Quick exponential decay — punches then vanishes
     const gain = this.ctx.createGain();
     gain.gain.setValueAtTime(CLICK_GAIN_START, now);
     gain.gain.exponentialRampToValueAtTime(CLICK_GAIN_END, now + CLICK_DECAY_TIME);
@@ -119,11 +109,19 @@ class SpaceAudio
     src.connect(filter);
     filter.connect(gain);
     gain.connect(this.ctx.destination);
+    
+    // FIX: Listen for the buffer source to finish playing, then sever all connections.
+    // This allows the browser's garbage collector to fully destroy the dead nodes.
+    src.onended = () => {
+      src.disconnect();
+      filter.disconnect();
+      gain.disconnect();
+    };
+
     src.start(now);
   }
 
   // ---- Public ---------------------------------------------------------------
-  // Must be called from a user gesture — browsers suspend AudioContext by default
   resume()
   {
     if (this.ctx.state === 'suspended') this.ctx.resume();
