@@ -19,7 +19,6 @@ class Controller
   update(dt)
   {
     this.updateScene(dt)
-    this.drawScene()
   }
 
   updateScene(dt)

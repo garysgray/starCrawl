@@ -71,5 +71,7 @@ function gameLoop()
   // Hit step cap — discard leftover to prevent runaway accumulator
   if (steps >= MAX_STEPS) accumulator = 0;
 
+  myController.drawScene();
+
   requestAnimationFrame(gameLoop);
 }

@@ -186,6 +186,10 @@ body
     0 -1px 0 rgba(0,0,0,0.6)       inset;
   opacity: 0;
 }
+.HUD 
+{
+    bottom: 70px;
+}
 
 .control-group
 {
@@ -455,9 +459,10 @@ button.active-speed
   {
     flex-direction: column;
     gap:            10px;
-    bottom:         20px;
+    bottom:         80px;
     padding:        14px 16px;
     width:          calc(100vw - 32px);
+    
   }
 
   .hud-divider
