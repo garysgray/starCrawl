@@ -14,13 +14,15 @@
 </head>
 <body>
 
-  <!-- ── Scene Layers ───────────────────────────────────────── -->
-  <canvas id="stars"></canvas>
-  <div id="nebula"></div>
-  <canvas id="ships"></canvas>
-  <div id="vignette"></div>
-  <canvas id="noise"></canvas>
-  <canvas id="planet"></canvas>
+   <!-- ── Scene Layers (Wrapped in Widescreen Virtual Container) ──────────────── -->
+  <div class="space-viewport">
+    <canvas id="stars"></canvas>
+    <div id="nebula"></div>
+    <canvas id="ships"></canvas>
+    <div id="vignette"></div>
+    <canvas id="noise"></canvas>
+    <canvas id="planet"></canvas>
+  </div>
 
   <!-- ── Crawl ──────────────────────────────────────────────── -->
   <div class="crawl-stage">
@@ -101,15 +103,18 @@
     GitHub
   </a>
 
-  <!-- ── Scripts (order matters — dependencies before dependents) ── -->
+      <!-- ── Scripts (order matters — dependencies before dependents) ── -->
   <script src="data/crawl-text.js"></script>
+  <script src="data/PlanetCatalog.js"></script>
+  <script src="data/ShipCatalog.js"></script>   <!-- Injected profile definitions first -->
   <script src="js/Scene.js"></script>
   <script src="js/UIComponent.js"></script>
   <script src="js/UIManager.js"></script>
   <script src="js/Timer.js"></script>
   <script src="js/SceneConfig.js"></script>
-  <script src="js/Ship.js"></script>
+  <script src="js/Ship.js"></script>          <!-- Standard object constructor hook -->
   <script src="js/ShipRenderer.js"></script>
+  <script src="js/Planet.js"></script>
   <script src="js/PlanetRenderer.js"></script>
   <script src="js/StarField.js"></script>
   <script src="js/SpaceAudio.js"></script>
@@ -117,6 +122,7 @@
   <script src="js/HUD.js"></script>
   <script src="js/Controller.js"></script>
   <script src="js/Main.js"></script>
+
   
 </body>
 </html>

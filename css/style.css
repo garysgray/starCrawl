@@ -269,11 +269,45 @@ button.active-speed
 /* ── Mobile Responsive Overlay Adjustments ───────────────────── */
 @media (max-width: 640px)
 {
-  .crawl-content p,
-  .crawl-title
+  :root
   {
-    font-size:      clamp(24px, 4vw, 36px);
-    letter-spacing: 0.02em;
+    --crawl-width   : 92%;
+    --crawl-pitch   : 30deg;
+
+    /* Swaps mobile properties via compositor layer to prevent layout engine reflows */
+    --hud-direction : column;
+    --hud-width     : calc(100vw - 32px);
+    --hud-padding   : 14px 16px;
+    --hud-gap       : 10px;
+    --hud-divider-w : 100%;
+    --hud-divider-h : 1px;
+  }
+
+  .control-group
+  {
+    width:           100%;
+    flex-direction:  row;
+    justify-content: space-between;
+    align-items:     center;
+    padding:         0;
+  }
+
+  .btn-row { gap: 6px; }
+
+  /* 
+    FIXED: Overrides the small clamp rule. By keeping the text at a massive mobile baseline 
+    (50px - 70px), it will render cleanly against the 3D perspective pitch matrix!
+  */
+  .crawl-title {
+    font-size: clamp(50px, 7vw, 75px) !important;
+    letter-spacing: 0.15em;
+    margin-bottom: 1em;
+  }
+
+  .crawl-content p {
+    font-size: clamp(45px, 5vw, 55px) !important;
+    line-height: 1.6;
+    margin-bottom: 1.2em;
   }
 
   .hud-divider
@@ -290,3 +324,11 @@ button.active-speed
 }
 
 
+
+/* ── Centered Widescreen Cinematic Layer Bounding Box ────────────────── */
+
+/* Ensure your crawl text element stage stays layered cleanly on top */
+.crawl-stage {
+  z-index: 10;
+  pointer-events: none; 
+}

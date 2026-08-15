@@ -55,14 +55,21 @@ class ShipRenderer
     this.upperGrad.addColorStop(1,   UPPER_DARK);
   }
 
-  draw(ctx)
+    draw(ctx)
   {
-    // 2. LAZY RESCUE: If renderer wasn't given a context at setup, build it once here
+    // DIAGNOSTIC LAYER: Check what the transformation matrix looks like right before drawing lines
+    if (Math.random() < 0.01) {
+      const transform = ctx.getTransform();
+      console.log(`🎨 SHIP RENDER ENGINE:`);
+      console.log(`   -> Matrix Scale X: ${transform.a.toFixed(4)} (Horizontal Stretch)`);
+      console.log(`   -> Matrix Scale Y: ${transform.d.toFixed(4)} (Vertical Stretch)`);
+      console.log(`   -> Skew Factors: B=${transform.b.toFixed(4)}, C=${transform.c.toFixed(4)}`);
+    }
+
     if (!this.hullGrad) {
       this._initStaticGradients(ctx);
     }
 
-    // Pass the cached memory gradients down to drawing sub-functions
     this._drawHull(ctx, this.hullGrad, this.upperGrad);
     this._drawSidePanels(ctx);
     this._drawSpine(ctx);
@@ -71,6 +78,7 @@ class ShipRenderer
     this._drawEngines(ctx);
     this._drawCockpit(ctx);
   }
+
 
   // ---- Hull -----------------------------------------------------------------
   _drawHull(ctx, hullGrad, upperGrad)

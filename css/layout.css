@@ -29,23 +29,29 @@ body
   overflow:    hidden;
   height:      100vh;
   width:       100vw;
+  background:  #000;
 }
 
-/* ── Fixed Scene Layers ──────────────────────────────────────── */
+/* ── Fixed Full-Screen Background Scene Layers ───────────────── */
+#stars, #nebula, #planet, #ships, #vignette, #noise
+{
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
 #stars 
 { 
-  position: fixed; 
-  inset: 0; 
   z-index: 0; 
+  pointer-events: auto;
   will-change: transform;
 }
 
 #nebula
 {
-  position:       fixed;
-  inset:          0;
   z-index:        1;
-  pointer-events: none;
   animation:      nebula-shift 30s ease-in-out infinite alternate;
   will-change:    transform, opacity;
 }
@@ -58,34 +64,22 @@ body
 
 #planet 
 { 
-  position: fixed; 
-  inset: 0; 
   z-index: 2; 
-  pointer-events: none; 
 }
 
 #ships
 {
-  position:       fixed;
-  inset:          0;
   z-index:        3;
-  pointer-events: none;
 }
 
 #vignette
 {
-  position:       fixed;
-  inset:          0;
   z-index:        8;
-  pointer-events: none;
 }
 
 #noise
 {
-  position:       fixed;
-  inset:          0;
   z-index:        9;
-  pointer-events: none;
 }
 
 /* ── 3D Text Crawl Container Stage ───────────────────────────── */
@@ -241,9 +235,9 @@ body
   :root
   {
     --crawl-width   : 92%;
-    --crawl-pitch   : 30deg;
+    /* LOCKED: Kept pitch unified at 40deg on mobile so text spacing matrices do not break! */
+    --crawl-pitch   : 40deg;
 
-    /* Swaps mobile properties via compositor layer to prevent layout engine reflows */
     --hud-direction : column;
     --hud-width     : calc(100vw - 32px);
     --hud-padding   : 14px 16px;
