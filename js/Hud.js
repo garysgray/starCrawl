@@ -1,93 +1,83 @@
-// ── HUD ───────────────────────────────────────────────────────
-
-// ---- Config -----------------------------------------------------------------
-const HUD_HIDE_DELAY    = 3000;   // ms of inactivity before HUD hides
-const HUD_TRANSITION    = 'opacity 0.6s ease, transform 0.6s ease';
-const HUD_CURSOR_ACTIVE = 'crosshair';
-const HUD_CURSOR_HIDDEN = 'none';
-
-// ---- Button groups ----------------------------------------------------------
-const SPEED_IDS = ['slow', 'med',  'fast'];
-const STAR_IDS  = ['calm', 'drift', 'warp'];
-
-class HUD
+// ── HUD COMPONENT ────────────────────────────────────────────────────────────
+class HUD extends UIComponent
 {
-  constructor(onSpeedChange, onStarMode, onClickSound)
+  constructor()
   {
-    this.el            = document.querySelector('.HUD');
-    this.hideTimer     = null;
-    this.onSpeedChange = onSpeedChange;
-    this.onStarMode    = onStarMode;
-    this.onClickSound  = onClickSound;
-
-    // FIX: Lock a single, permanent function reference into memory at bootup
-    this._boundShow    = this._show.bind(this);
-
-    this._bindButtons();
+    super();
+    this.el        = document.querySelector('.HUD');
+    this.hideTimer = null;
+    this._boundShow = this._show.bind(this);
     this._initAutoHide();
   }
 
-  // ---- Setup ----------------------------------------------------------------
-  // Wires up speed and star mode button groups
-  _bindButtons()
+  // ── MAP ELEMENT IDS TO DATA CORRIDORS ──────────────────────────────────────
+    getEventMaps()
   {
-    this._bindGroup('speed', SPEED_IDS, this.onSpeedChange);
-    this._bindGroup('stars', STAR_IDS,  this.onStarMode);
+    return [
+      { elementId: 'speed-slow', eventType: 'click', actionType: CONFIG.UIActions.SET_SPEED, actionValue: 'slow' },
+      { elementId: 'speed-med',  eventType: 'click', actionType: CONFIG.UIActions.SET_SPEED, actionValue: 'med' },
+      { elementId: 'speed-fast', eventType: 'click', actionType: CONFIG.UIActions.SET_SPEED, actionValue: 'fast' },
+      
+      { elementId: 'stars-calm',  eventType: 'click', actionType: CONFIG.UIActions.SET_STARS, actionValue: 'calm' },
+      { elementId: 'stars-drift', eventType: 'click', actionType: CONFIG.UIActions.SET_STARS, actionValue: 'drift' },
+      { elementId: 'stars-warp',  eventType: 'click', actionType: CONFIG.UIActions.SET_STARS, actionValue: 'warp' },
+      
+      { elementId: 'edit-text',   eventType: 'click', actionType: CONFIG.UIActions.OPEN_EDITOR, actionValue: 'open' }
+    ];
   }
 
-  // Binds a group of buttons — clicking one activates it and deactivates the rest
-  _bindGroup(prefix, ids, callback)
+
+  // ── UPDATE ACTIVE DISPLAY BUTTON STYLES ────────────────────────────────────
+  updateVisualState(actionType, value)
   {
-    ids.forEach(id =>
+    if (actionType === CONFIG.UIActions.SET_SPEED)
     {
-      document.getElementById(`${prefix}-${id}`).addEventListener('click', () =>
-      {
-        this.onClickSound();
-        ids.forEach(b => document.getElementById(`${prefix}-${b}`).className = '');
-        document.getElementById(`${prefix}-${id}`).className = 'active-speed';
-        callback(id);
+      ['slow', 'med', 'fast'].forEach(b => {
+        const btn = document.getElementById(`speed-${b}`);
+        if (btn) btn.className = (b === value) ? 'active-speed' : '';
       });
-    });
+    }
+
+    if (actionType === CONFIG.UIActions.SET_STARS)
+    {
+      ['calm', 'drift', 'warp'].forEach(b => {
+        const btn = document.getElementById(`stars-${b}`);
+        // FIX: Remove fake colors entirely. Apply your real golden styling class.
+        if (btn) btn.className = (b === value) ? 'active-speed' : '';
+      });
+    }
   }
+
+
 
   // ---- Auto-hide ------------------------------------------------------------
-  // HUD fades in on load then hides after inactivity — reappears on mouse/touch
   _initAutoHide()
   {
-    this.el.style.transition = HUD_TRANSITION;
-
-    // Double rAF ensures transition is registered before first show
-    requestAnimationFrame(() =>
-    {
-      requestAnimationFrame(() =>
-      {
+    this.el.style.transition = CONFIG.hud.transitionCss;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
         this._show();
-        
-        // FIX: Point event listeners directly to the permanent memory slot.
-        // Moving the mouse across the screen now runs with zero new memory allocations.
-        document.addEventListener('mousemove',  this._boundShow);
-        document.addEventListener('touchstart', this._boundShow);
-        document.addEventListener('touchmove',  this._boundShow);
+        this.addListener(document, 'mousemove',  this._boundShow);
+        this.addListener(document, 'touchstart', this._boundShow);
+        this.addListener(document, 'touchmove',  this._boundShow);
       });
     });
   }
 
-  // Shows the HUD and resets the hide timer
   _show()
   {
     this.el.style.opacity       = '1';
     this.el.style.pointerEvents = 'auto';
     this.el.style.transform     = 'translateX(-50%) translateY(0)';
-    document.body.style.cursor  = HUD_CURSOR_ACTIVE;
+    document.body.style.cursor  = 'crosshair';
     clearTimeout(this.hideTimer);
-    this.hideTimer = setTimeout(() => this._hide(), HUD_HIDE_DELAY);
+    this.hideTimer = setTimeout(() => this._hide(), CONFIG.hud.autoHideMs);
   }
 
-  // Hides the HUD and cursor after inactivity
   _hide()
   {
     this.el.style.opacity       = '0';
     this.el.style.pointerEvents = 'none';
-    document.body.style.cursor  = HUD_CURSOR_HIDDEN;
+    document.body.style.cursor  = 'none';
   }
 }
