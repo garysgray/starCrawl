@@ -31,7 +31,17 @@ class Scene {
     this.spawnTimer.start();
 
     this._resize();
-    window.addEventListener('resize', () => this._resize());
+    window.addEventListener('resize', () => 
+    {
+      // 1. Scene updates its internal canvas pixel resolutions first
+      this._resize();
+      
+      // 2. BROADCAST SIGNAL: Call the crawl engine's individual bounds calculator
+      if (this.crawl && typeof this.crawl.recalculateBounds === 'function') 
+      {
+        this.crawl.recalculateBounds();
+      }
+    });
   }
 
   // ---- Setup ----------------------------------------------------------------

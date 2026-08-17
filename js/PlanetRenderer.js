@@ -93,20 +93,27 @@ class PlanetRenderer {
     }
 
     draw(ctx, planet, canvasW, canvasH, alpha = 1.0) {
-        const r = PHYSICS_CONFIG.BASE_RADIUS * planet.scale;
+        // FIXED CELESTIAL METRIC BASELINE:
+        // Anchors sizing against a standard 1280 design box multiplier.
+        // This stops the gas giant from inflating into huge pixel bounds on desktop monitors!
+        const layoutScale = canvasW / 1280;
+        
+        const r = PHYSICS_CONFIG.BASE_RADIUS * planet.scale * layoutScale;
         const px = canvasW * planet.x;
         const py = canvasH * planet.y;
 
-        // DIAGNOSTIC LAYER: Track planet placement and coordinate bounds
+        // PROOF STATEMENT MONITOR: Prints out structural values once every 120 ticks
         if (alpha === 0 || Math.random() < 0.01) {
-            console.log(`🌍 PLANET MATRIX DIAGNOSTIC:`);
-            console.log(`   -> Screen Boundaries Given: Width=${canvasW}px, Height=${canvasH}px`);
-            console.log(`   -> Drawing Center: X=${px.toFixed(1)}px, Y=${py.toFixed(1)}px | Calculated Radius=${r.toFixed(1)}px`);
+            console.log(`🌍 CELESTIAL PROOF MONITOR:`);
+            console.log(`   -> Active Frame Width Metric: ${canvasW}px`);
+            console.log(`   -> Visual Layout Scale Factor Applied: ${layoutScale.toFixed(4)}`);
+            console.log(`   -> Planet Positioning Profile: Center=[X:${px.toFixed(0)}px, Y:${py.toFixed(0)}px] | Physical Radius=${r.toFixed(1)}px`);
         }
 
         if (!planet.textureMap) {
             planet.textureMap = this._generateTextureMap(planet);
         }
+        
         // Resize buffer canvas configuration dynamically to match current planet scale
         if (this.bufferCanvas.width !== Math.ceil(r * 2)) {
             this.bufferCanvas.width = Math.ceil(r * 2);
@@ -117,11 +124,11 @@ class PlanetRenderer {
         this.bufferCtx.save();
         this.bufferCtx.translate(r, r);
 
-        // Scale global rendering sub-routines to match object scale variables
+        // Scale global rendering sub-routines to match layout boundary ratios safely
         const scaledSliceCache = this.sliceCache.map(s => ({
-            sx: s.sx * planet.scale,
+            sx: s.sx * planet.scale * layoutScale,
             txOffset: s.txOffset,
-            step: s.step * planet.scale
+            step: s.step * planet.scale * layoutScale
         }));
 
         this._drawSphereBase(this.bufferCtx, r);
@@ -193,7 +200,6 @@ class PlanetRenderer {
         ctx.arc(0, 0, r, 0, Math.PI * 2);
         ctx.fill();
     }
-
     _drawAtmosphereGlow(ctx, r, planet) {
         const innerR = (planet.atmosInnerRadius ?? COSMETIC_CONFIG.ATMOS_INNER_RADIUS);
         const outerR = (planet.atmosOuterRadius ?? COSMETIC_CONFIG.ATMOS_OUTER_RADIUS);

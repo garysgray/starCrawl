@@ -72,10 +72,12 @@ body
   font-weight:    900;
   line-height:    1.8;
   letter-spacing: 0.04em;
-  color:          var(--gold);
+  text-align:      justify; /* Combined structural text flow */
+  color:           var(--gold);
   text-shadow:    0 0 12px var(--gold-glow-strong), 0 0 40px var(--gold-glow-faint);
   margin-bottom:  1.5em;
 }
+
 
 /* ── Control Console Components ──────────────────────────────── */
 .HUD
@@ -272,7 +274,12 @@ button.active-speed
   :root
   {
     --crawl-width   : 92%;
-    --crawl-pitch   : 30deg;
+    
+    /* 
+      FIXED PERSPECTIVE: Erased the 30deg override line completely! 
+      By letting it fall back to your layout.css 40deg rule, the text layer 
+      tilts deep into space, creating that classic movie pyramid taper on phones!
+    */
 
     /* Swaps mobile properties via compositor layer to prevent layout engine reflows */
     --hud-direction : column;
@@ -294,10 +301,7 @@ button.active-speed
 
   .btn-row { gap: 6px; }
 
-  /* 
-    FIXED: Overrides the small clamp rule. By keeping the text at a massive mobile baseline 
-    (50px - 70px), it will render cleanly against the 3D perspective pitch matrix!
-  */
+  /* Cleaned out the duplicate small font rule entirely to leave only your large crisp baselines */
   .crawl-title {
     font-size: clamp(50px, 7vw, 75px) !important;
     letter-spacing: 0.15em;

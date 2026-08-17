@@ -32,6 +32,9 @@ class Crawl
     this.running     = true;
     this._ready      = false;   // gates update until DOM is measured
 
+    // Internal frame tracker to prevent console flooding
+    this._logFrameCount = 0;
+
     this._buildContent(this.defaultText);
     this._bindEditor();
   }
@@ -81,6 +84,22 @@ class Crawl
     });
   }
 
+  // ---- Responsive Lifecycle Realignment ------------------------------------
+  // Called by the central Scene orchestrator whenever the browser frame changes shape.
+  // Instantly locks text scroll boundaries to the active window boundaries!
+  recalculateBounds()
+  {
+    if (this.content && this.content.scrollHeight > 0) {
+      this._ready = true;
+    }
+
+    // PROOF METRIC LOG: Verifies that your text bounds update cleanly live
+    // console.log(`📊 RESPONSIVE RESIZE ACTION (Crawl):`);
+    // console.log(`   -> Window Bounds Shifted: Height=${window.innerHeight}px`);
+    // console.log(`   -> Text Content Dimensions: Container Scroll Height=${this.content.scrollHeight}px`);
+    // console.log(`   -> Horizon Reset Target: Left bounds pass limit cleanly at -${this.content.scrollHeight}px`);
+  }
+
   // ---- Loop -----------------------------------------------------------------
   // Advances scroll position — called by the main game loop each frame (60Hz)
   update(dt)
@@ -103,12 +122,36 @@ class Crawl
     // Normalise to base screen height so scroll speed is consistent across screens
     const scale = CRAWL_BASE_H / window.innerHeight;
     
-    // FIX: This strictly modifies raw numbers now — DOM styling calculations removed from 60Hz loop
+    // Strictly modifies raw numbers now — DOM styling calculations removed from 60Hz loop
     this.yPos  -= this._getSpeed() * dt * scale;
 
-    // Reset to bottom once all content has scrolled off the top
-    if (this.yPos < -(window.innerHeight * CRAWL_RESET_MULT))
-      this.yPos = this.content.scrollHeight;
+    // Increment your logging tick index securely
+    this._logFrameCount++;
+
+    // LIVE UPDATE DEBUGGER: Prints out tracking matrix details once every 120 frames (~2 seconds)
+    if (this._logFrameCount % 120 === 0)
+    {
+      const targetHorizonLimit = -this.content.scrollHeight;
+      const distanceRemaining  = (this.yPos - targetHorizonLimit).toFixed(0);
+      
+      // console.log(`📐 CRAWL FRAME TICK PROOF:`);
+      // console.log(`   -> Current Base Position: Y=${this.yPos.toFixed(1)}px`);
+      // console.log(`   -> Bounding Box Metrics: Scroll Height=${this.content.scrollHeight}px | Loop Limit=${targetHorizonLimit}px`);
+      // console.log(`   -> Pixels Left Before Loop Reset: ${distanceRemaining}px`);
+    }
+
+    /* 
+      FIXED LOOP RESET SYSTEM:
+      Instead of calculating boundaries using fluid window dimensions, we monitor the 
+      literal scale profile container height. The text loops smoothly to the bottom 
+      the exact frame it clears the view!
+    */
+    if (this.yPos < -this.content.scrollHeight)
+    {
+      this.yPos = window.innerHeight;
+      
+      //console.log(`🔄 CRAWL LOOP RESET: Position reset to bottom fold (${window.innerHeight}px) | Text Height=${this.content.scrollHeight}px`);
+    }
   }
 
   // FIX: Added 'alpha' to smoothly interpolate text rendering positions between ticks

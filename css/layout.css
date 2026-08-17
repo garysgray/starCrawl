@@ -130,10 +130,9 @@ body
   width:           var(--crawl-width);
   transform-origin: 50% 100%;
   transform:       translateX(-50%) rotateX(var(--crawl-pitch));
-  text-align:      justify;
-  padding-bottom:  5vh;
   will-change:     transform;
 }
+
 
 /* ── Interactive Head-Up Display Layout ──────────────────────── */
 .HUD

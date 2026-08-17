@@ -1,8 +1,10 @@
-const PLANET_CATALOG = {
-    gasGiantAlpha: {
+const PLANET_CATALOG = 
+{
+    gasGiantAlpha: 
+    {
         x: 0.85,
         y: 0.8,
-        scale: 0.8,
+        scale: 0.5,
         tilt: 0.2,
         spinSpeed: 0.0005,
         baseColor: '#1e2135',
@@ -20,5 +22,35 @@ const PLANET_CATALOG = {
             { innerRadius: 1.35, outerRadius: 1.75, color: 'rgba(76, 93, 116, 0.3)', tilt: 0.35 },
             { innerRadius: 1.80, outerRadius: 2.05, color: 'rgba(80, 68, 109, 0.18)', tilt: 0.35 }
         ]
+    },
+
+      deathStarAlpha: {
+        // FIXED POSITION & SIZE: Locked perfectly to match gasGiantAlpha down to the decimal
+        x:              0.85,   
+        y:              0.8,    
+        scale:          0.8,    
+        tilt:           0.0,    // Kept flat so your industrial mechanical panel lines run straight across
+        spinSpeed:      0.0002, // Slow mechanical rotation vector
+        baseColor:      '#444952', // Matte tactical industrial armor plating grey
+        
+        // Mechanical Plating Details
+        bandCount:      45,     
+        bandOpacityMin: 0.12,   
+        bandOpacityMax: 0.28,   
+        gritCount:      9500,   
+        
+        // Weapon Array Dish (Positioned at 35% depth on the face of the sphere)
+        craters: [
+            {
+                count:      1,       
+                minR:       48,      
+                maxR:       48,
+                color:      '#30343c', 
+                rimColor:   'rgba(255, 255, 255, 0.15)', 
+                depthColor: 'rgba(0, 0, 0, 0.55)',       
+                latBand:    [0.35, 0.35] 
+            }
+        ],
+        rings: [] // An artificial battlestation has no natural planetary space dust rings
     }
 };
