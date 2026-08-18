@@ -3,9 +3,6 @@ const COSMETIC_CONFIG = { GRIT_OPACITY: 0.05, CRATER_RIM_OPACITY: 0.1, SUN_HIGHL
 
 class SpaceObjectRenderer {
     constructor() {
-        this.lightX = 0.5;
-        this.lightY = -0.25;
-
         // Universal offscreen buffer caches
         this.bufferCanvas = document.createElement('canvas');
         this.bufferCtx = this.bufferCanvas.getContext('2d');
@@ -23,171 +20,8 @@ class SpaceObjectRenderer {
         }
     }
 
-        _generateTextureMap(spaceObject) {
-        const canvas = document.createElement('canvas');
-        canvas.width = PHYSICS_CONFIG.TEXTURE_WIDTH;
-        canvas.height = PHYSICS_CONFIG.TEXTURE_HEIGHT;
-        const tctx = canvas.getContext('2d');
-        const w = canvas.width, h = canvas.height;
-
-        tctx.fillStyle = spaceObject.baseColor;
-        tctx.fillRect(0, 0, w, h);
-
-        // ─────────────────────────────────────────────────────────────────────
-        // 🛰️ STATION GENERATOR BLOCK (Zero randomness, locked structure)
-        // ─────────────────────────────────────────────────────────────────────
-        if (spaceObject.type === 'station') {
-            // Draw exactly 4 subtle, faint structural panel lines in each hemisphere
-            tctx.strokeStyle = 'rgba(0, 0, 0, 0.22)';
-            tctx.lineWidth = 1.5;
-            
-            // Northern Hemisphere Lines
-            const northGaps = [h * 0.12, h * 0.22, h * 0.32, h * 0.42];
-            northGaps.forEach(y => {
-                tctx.beginPath(); tctx.moveTo(0, y); tctx.lineTo(w, y); tctx.stroke();
-            });
-
-            // Southern Hemisphere Lines
-            const southGaps = [h * 0.58, h * 0.68, h * 0.78, h * 0.88];
-            southGaps.forEach(y => {
-                tctx.beginPath(); tctx.moveTo(0, y); tctx.lineTo(w, y); tctx.stroke();
-            });
-
-            // Draw the thick, dominant equatorial centerline trench belt
-            tctx.fillStyle = 'rgba(10, 11, 14, 0.98)';
-            tctx.fillRect(0, (h / 2) - 10, w, 20);
-            
-            tctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
-            tctx.lineWidth = 1;
-            tctx.beginPath();
-            tctx.moveTo(0, h / 2); tctx.lineTo(w, h / 2);
-            tctx.stroke();
-
-            // Inject fine micro-greebles and window illumination panels away from the trench
-            tctx.fillStyle = `rgba(255, 255, 255, 0.05)`;
-            for (let i = 0; i < 250; i++) {
-                const x = (i * 31) % w;
-                const y = (i * 47) % h;
-                if (Math.abs(y - h/2) > 30) { 
-                    tctx.fillRect(x, y, 1.5, 1.5);
-                }
-            }
-
-            /* 
-              ANAMORPHIC DISH CALIBRATION:
-              - dishX (w * 0.165): Pulls it back left, centering it in the upper-left quadrant.
-              - dishY (h * 0.35): Centers it vertically in the top hemisphere, away from the top pole.
-              - rX / rY: Using 110px width vs 78px height counteracts the 3D wrapping compression,
-                forcing it into a visually immaculate round circle on your screen layout!
-            */
-            const dishX = w * 0.190; 
-            const dishY = h * 0.40;
-            const rX = 96; 
-            const rY = 68;
-
-            [0, -w, w].forEach(offset => {
-                const cx = dishX + offset;
-                
-                tctx.fillStyle = '#2a2e36';
-                tctx.beginPath();
-                tctx.ellipse(cx, dishY, rX, rY, 0, 0, Math.PI * 2);
-                tctx.fill();
-
-                // Parabolic sunken shadow mapping gradient matching the ellipse dimensions
-                const depthGrad = tctx.createRadialGradient(cx, dishY, rY * 0.15, cx, dishY, rX);
-                depthGrad.addColorStop(0, 'rgba(12, 14, 18, 0.1)');
-                depthGrad.addColorStop(0.7, 'rgba(10, 12, 15, 0.65)');
-                depthGrad.addColorStop(1, 'rgba(4, 5, 6, 0.95)');
-                tctx.fillStyle = depthGrad;
-                tctx.beginPath();
-                tctx.ellipse(cx, dishY, rX, rY, 0, 0, Math.PI * 2);
-                tctx.fill();
-
-                // Perimeter bezel casing outer rim highlight
-                tctx.strokeStyle = 'rgba(255, 255, 255, 0.10)';
-                tctx.lineWidth = 4;
-                tctx.beginPath();
-                tctx.ellipse(cx, dishY, rX * 0.95, rY * 0.95, 0, 0, Math.PI * 2);
-                tctx.stroke();
-                
-                // Focal focus crystal emitter node point (offset slightly for 3D depth)
-                tctx.fillStyle = '#16191e';
-                tctx.beginPath();
-                tctx.ellipse(cx - 8, dishY - 3, rX * 0.14, rY * 0.14, 0, 0, Math.PI * 2);
-                tctx.fill();
-            });
-        } 
-                // ─────────────────────────────────────────────────────────────────────
-        // 🪐 ORIGINAL PLANET GENERATOR BLOCK (Maintains random organic gas bands)
-        // ─────────────────────────────────────────────────────────────────────
-        else {
-            for (let i = 0; i < spaceObject.bandCount; i++) {
-                const y = Math.random() * h;
-                const bh = 20 + Math.random() * 80;
-                const op = spaceObject.bandOpacityMin + Math.random() * (spaceObject.bandOpacityMax - spaceObject.bandOpacityMin);
-                tctx.fillStyle = `rgba(0, 0, 0, ${op})`;
-                tctx.fillRect(0, y, w, bh);
-            }
-
-            tctx.fillStyle = `rgba(255, 255, 255, ${COSMETIC_CONFIG.GRIT_OPACITY})`;
-            for (let i = 0; i < spaceObject.gritCount; i++) {
-                const x = Math.random() * w;
-                const y = Math.random() * h;
-                tctx.fillRect(x, y, 1.5, 1.5);
-                if (x < 50) tctx.fillRect(x + w, y, 1.5, 1.5);
-                if (x > w - 50) tctx.fillRect(x - w, y, 1.5, 1.5);
-            }
-
-            const grps = spaceObject.craters || [];
-            grps.forEach(grp => {
-                const count = grp.count ?? 80;
-                const minR = grp.minR ?? 5;
-                const maxR = grp.maxR ?? 40;
-                const color = grp.color || 'rgba(0,0,0,0.4)';
-                const rimColor = grp.rimColor || `rgba(255,255,255,${COSMETIC_CONFIG.CRATER_RIM_OPACITY})`;
-                const depthColor = grp.depthColor || 'rgba(0,0,0,0.4)';
-                
-                const yMin = (grp.latBand && Array.isArray(grp.latBand)) ? grp.latBand[0] * h : 0;
-                const yMax = (grp.latBand && Array.isArray(grp.latBand)) ? grp.latBand[1] * h : h;
-
-                for (let i = 0; i < count; i++) {
-                    const x = Math.random() * w;
-                    const y = yMin + Math.random() * (yMax - yMin);
-                    const cr = minR + Math.pow(Math.random(), 2) * (maxR - minR);
-
-                    [0, -w, w].forEach(offset => {
-                        const cx = x + offset;
-                        tctx.fillStyle = color;
-                        tctx.beginPath();
-                        tctx.arc(cx, y, cr, 0, Math.PI * 2);
-                        tctx.fill();
-
-                        const depthGrad = tctx.createRadialGradient(cx, y, cr * 0.3, cx, y, cr);
-                        depthGrad.addColorStop(0, 'transparent');
-                        depthGrad.addColorStop(1, depthColor);
-                        tctx.fillStyle = depthGrad;
-                        tctx.beginPath();
-                        tctx.arc(cx, y, cr, 0, Math.PI * 2);
-                        tctx.fill();
-
-                        tctx.strokeStyle = rimColor;
-                        tctx.lineWidth = Math.max(1, cr * 0.08);
-                        tctx.beginPath();
-                        tctx.arc(cx, y, cr * 0.92, 0, Math.PI * 2);
-                        tctx.stroke();
-                    });
-                }
-            });
-        }
-        return canvas;
-    }
-
-    draw(ctx, spaceObject, canvasW, canvasH, alpha = 1.0) 
-    {
-        // FIXED MULTI-DEVICE SCALE FILTER:
-        // By clamping layoutScale using Math.max(), we ensure that even if the 
-        // screen shrinks down to a tiny 320px mobile viewport, the object footprint 
-        // refuses to drop below a beautiful 0.65 scale multiplier threshold!
+    draw(ctx, spaceObject, canvasW, canvasH, alpha = 1.0) {
+        // FIXED MULTI-DEVICE SCALE FILTER
         const rawScale = canvasW / 1280;
         const layoutScale = Math.max(0.65, rawScale);
         
@@ -203,13 +37,22 @@ class SpaceObjectRenderer {
             console.log(`   -> Positioning Vector: Center=[X:${px.toFixed(0)}px, Y:${py.toFixed(0)}px] | Radius=${r.toFixed(1)}px`);
         }
 
+        // SELF-RENDERING HANDSHAKE:
         if (!spaceObject.textureMap) {
-            spaceObject.textureMap = this._generateTextureMap(spaceObject);
+            spaceObject.textureMap = spaceObject.generateTexture(
+                PHYSICS_CONFIG.TEXTURE_WIDTH, 
+                PHYSICS_CONFIG.TEXTURE_HEIGHT, 
+                COSMETIC_CONFIG
+            );
         }
         
         if (this.bufferCanvas.width !== Math.ceil(r * 2)) {
             this.bufferCanvas.width = Math.ceil(r * 2);
             this.bufferCanvas.height = Math.ceil(r * 2);
+
+            // Forces high-quality bilinear filtering on the 1px column slices
+            this.bufferCtx.imageSmoothingEnabled = true;
+            this.bufferCtx.imageSmoothingQuality = 'high';
         }
 
         this.bufferCtx.clearRect(0, 0, this.bufferCanvas.width, this.bufferCanvas.height);
@@ -222,14 +65,14 @@ class SpaceObjectRenderer {
             step: s.step * spaceObject.scale * layoutScale
         }));
 
-        this._drawSphereBase(this.bufferCtx, r);
+        this._drawSphereBase(this.bufferCtx, r, spaceObject);
 
         this.bufferCtx.save();
         this.bufferCtx.rotate(spaceObject.tilt);
         this._drawSurfaceTexture(this.bufferCtx, r, spaceObject, scaledSliceCache, alpha);
         this.bufferCtx.restore();
 
-        this._drawShadowOverlay(this.bufferCtx, r, spaceObject.type);
+        this._drawShadowOverlay(this.bufferCtx, r, spaceObject);
         this._drawAtmosphereGlow(this.bufferCtx, r, spaceObject);
         this.bufferCtx.restore();
 
@@ -249,8 +92,9 @@ class SpaceObjectRenderer {
         ctx.restore();
     }
 
-    _drawSphereBase(ctx, r) {
-        const lx = r * this.lightX, ly = r * this.lightY;
+       _drawSphereBase(ctx, r, spaceObject) {
+        // Reads lighting centers dynamically from individual entity configurations
+        const lx = r * spaceObject.lightX, ly = r * spaceObject.lightY;
         const grad = ctx.createRadialGradient(lx, ly, r * 0.1, 0, 0, r);
         grad.addColorStop(0, COSMETIC_CONFIG.SUN_HIGHLIGHT);
         grad.addColorStop(1, COSMETIC_CONFIG.DEEP_SPACE_DARK);
@@ -269,14 +113,11 @@ class SpaceObjectRenderer {
         const mapW = spaceObject.textureMap.width;
         const currentRot = spaceObject.rotation + (spaceObject.spinSpeed * alpha);
         
-        // STRAIGHTEN THE LINES FOR THE STATION:
-        // Force scrollX to 0 if the entity is an artificial station structure. 
-        // This flattens the sphere mapping, causing panel lines to draw straight 
-        // and keeping the superlaser weapon dish locked onto the front face!
         const scrollX = (spaceObject.type === 'station') 
             ? 0 
             : (currentRot % (Math.PI * 2)) * (mapW / (Math.PI * 2));
 
+        // 👇 FIXED: Restored complete slicing loop parameters
         for (let i = 0; i < scaledSlices.length; i++) {
             const slice = scaledSlices[i];
             const safeTX = (slice.txOffset + scrollX) % (mapW - 1);
@@ -292,21 +133,15 @@ class SpaceObjectRenderer {
         ctx.restore();
     }
 
-        _drawShadowOverlay(ctx, r, objectType) {
-        const ox = r * this.lightX * 0.5, oy = r * this.lightY * 0.5;
+    _drawShadowOverlay(ctx, r, spaceObject) {
+        // 👇 FIXED: Restored top initialization arguments missing from fragment cut
+        const ox = r * spaceObject.lightX * 0.5, oy = r * spaceObject.lightY * 0.5;
         const grad = ctx.createRadialGradient(ox, oy, r * 0.1, ox, oy, r * 1.15);
         
-        // CINEMATIC TERMINATOR SHADOW FOR THE STATION:
-        // By pushing the opacity stop to 0.98, the dark side falls off aggressively 
-        // into near-total blackness, creating a high-contrast blend with background space!
-        if (objectType === 'station') {
-            grad.addColorStop(0.15, 'transparent');
-            grad.addColorStop(0.70, 'rgba(0, 0, 0, 0.82)');
-            grad.addColorStop(1, 'rgba(3, 4, 6, 0.98)');
-        } else {
-            grad.addColorStop(0.3, 'transparent');
-            grad.addColorStop(1, COSMETIC_CONFIG.TERMINATOR_SHADOW);
-        }
+        // Iterates over custom subclass shadow configurations
+        spaceObject.shadowStops.forEach(s => {
+            grad.addColorStop(s.stop, s.color);
+        });
         
         ctx.fillStyle = grad;
         ctx.beginPath();
@@ -315,10 +150,9 @@ class SpaceObjectRenderer {
     }
 
 
-        _drawAtmosphereGlow(ctx, r, spaceObject) {
-        // STATION ATTENUATION: Mechanical space stations do not have thick, bright gas atmospheres.
-        // We drop its opacity scale down to a faint silhouette wrap so it matches your dark reference image!
-        const maxOpacity = (spaceObject.type === 'station') ? 0.08 : 0.28;
+    _drawAtmosphereGlow(ctx, r, spaceObject) {
+        // 👇 UPDATED: Automatically maps to the fine-tuned, class-defined opacity values
+        const maxOpacity = spaceObject.rimOpacity;
         
         ctx.save();
         ctx.globalCompositeOperation = 'screen';
@@ -348,7 +182,7 @@ class SpaceObjectRenderer {
         ctx.restore();
     }
 
-        _drawRingHalf(ctx, r, spaceObject, rg, layer) {
+   _drawRingHalf(ctx, r, spaceObject, rg, layer) {
         // Validation check: Artificial station types skip planetary space dust systems entirely
         if (!rg || spaceObject.type === 'station') return;
 
