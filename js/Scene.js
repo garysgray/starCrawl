@@ -13,18 +13,28 @@ class Scene {
     this.crawl = new Crawl(audio);
     this.ships = [];
 
-    // Milestone B: Transform solo planet properties into an Array layout
-    this.planets = [
-      new Planet(PLANET_CATALOG.gasGiantAlpha)
-    ];
+    // 1. Pick your catalog target item securely
+    const selectedBlueprint = CELESTIAL_CATALOG.deathStarAlpha; // Switch to gasGiantAlpha to load the blue planet!
+    
+    // 2. DYNAMIC CELESTIAL FACTORY LOOKUP: Spawns the explicit subclass matching your object token
+    let activeSpaceObject;
+    if (selectedBlueprint && selectedBlueprint.objectType === 'station') {
+        activeSpaceObject = new SpaceStationEntity(selectedBlueprint);
+    } else {
+        activeSpaceObject = new PlanetEntity(selectedBlueprint || CELESTIAL_CATALOG.gasGiantAlpha);
+    }
+
+    // UNIFIED UNIVERSE REFACTOR: Replaced planets array with generic space object tracker array
+    this.backgroundObjects = [ activeSpaceObject ];
 
     this.canvas = document.getElementById('ships');
     this.ctx = this.canvas.getContext('2d');
     this.renderer = new ShipRenderer();
 
-    this.planetCanvas = document.getElementById('planet');
-    this.planetCtx = this.planetCanvas.getContext('2d');
-    this.planetRenderer = new PlanetRenderer();
+    // UNIFIED UNIVERSE REFACTOR: Purged planet DOM tags and updated variables to matching SpaceObject tokens
+    this.spaceObjCanvas = document.getElementById('space-object');
+    this.spaceObjCtx    = this.spaceObjCanvas.getContext('2d');
+    this.spaceObjRenderer = new SpaceObjectRenderer();
 
     // Spawn timer — initial delay before first ship
     this.spawnTimer = new Timer('ShipSpawner', 5, timerModes.COUNTDOWN, false);
@@ -51,11 +61,12 @@ class Scene {
     const h = window.innerHeight;
 
     // FIX ALIGNMENT: Force canvas size to match the real browser window edge-to-edge
-    // This perfectly centers your space map relative to your centered text crawl!
-    this.canvas.width        = w;
-    this.canvas.height       = h;
-    this.planetCanvas.width  = w;
-    this.planetCanvas.height = h;
+    this.canvas.width            = w;
+    this.canvas.height           = h;
+    
+    // UNIFIED UNIVERSE REFACTOR: Realigned width/height bindings to spaceObj tokens
+    this.spaceObjCanvas.width    = w;
+    this.spaceObjCanvas.height   = h;
 
     // CANVAS BOUND DIAGNOSTIC: Tracks exactly how your canvas boundaries overlay your screen
     const shipsCanvas = document.getElementById('ships');
@@ -107,7 +118,8 @@ class Scene {
 
     if (this.spawnTimer.update(dt)) this._handleSpawnTick();
 
-    this.planets.forEach(p => p.update(dt));
+    // UNIFIED UNIVERSE REFACTOR: Progress updates over generic backgroundObjects loop
+    this.backgroundObjects.forEach(obj => obj.update(dt));
 
     for (let i = this.ships.length - 1; i >= 0; i--)
     {
@@ -128,25 +140,26 @@ class Scene {
   // Accepts the sub-frame timing 'alpha' fraction from the controller
   draw(alpha) {
     this.stars.draw(alpha);
-    this._drawPlanets(alpha);
+    this._drawBackgroundEntities(alpha); // UNIFIED UNIVERSE REFACTOR: Call renamed visual rendering loop
     this._drawShips(alpha);
     this.crawl.draw(alpha);
   }
 
-  // Milestone B: Collection rendering sweep over the layout array
-  _drawPlanets(alpha) {
-    const ctx = this.planetCtx;
-    const w = this.planetCanvas.width;
-    const h = this.planetCanvas.height;
+  // UNIFIED UNIVERSE REFACTOR: Consolidated drawing sweep over background space entities
+  _drawBackgroundEntities(alpha) {
+    const ctx = this.spaceObjCtx;
+    const w = this.spaceObjCanvas.width;
+    const h = this.spaceObjCanvas.height;
 
     ctx.clearRect(0, 0, w, h);
     
-    this.planets.forEach(planet => {
-      this.planetRenderer.draw(ctx, planet, w, h, alpha);
+    // Iterates cleanly over whatever combination of subclasses occupy your background tracker
+    this.backgroundObjects.forEach(obj => {
+      this.spaceObjRenderer.draw(ctx, obj, w, h, alpha);
     });
   }
 
-      _drawShips(alpha)
+  _drawShips(alpha)
   {
     const { ctx, canvas } = this;
     const w = canvas.width;  
@@ -170,31 +183,20 @@ class Scene {
       const drawX = (interpolatedXPct / PCT_DIVISOR) * w;
       const drawY = (interpolatedYPct / PCT_DIVISOR) * h;
       
-      // Calculate your baseline scale multiplier safely relative to screen width
       const finalScale = s.getScale(w, null);
 
       ctx.save();
-      // 1. Move to the physical screen coordinate center
       ctx.translate(drawX, drawY);
       
-      /* 
-        FIXED SEQUENCE LAYER:
-        By flattening the vertical screen axis FIRST, we compress your wingspan down to 30%.
-        Then we rotate the horizontal model into place. Finally, we scale by finalScale.
-        This strips out the 11,000% overdrive completely, dropping the skew factor to 0.0000 
-        and restoring the ship's normal cinematic shape on both screens!
-      */
       ctx.scale(1, s.flattenY);
       ctx.rotate(Math.PI * s.rotation);
       ctx.scale(finalScale, finalScale);
       
       ctx.globalAlpha = s.alpha;
 
-      // PROOF CHECK DEBUGGER
       if (alpha === 0 || Math.random() < 0.01) { 
           const currentTransform = ctx.getTransform();
           const calculatedSkew = (currentTransform.b + currentTransform.c).toFixed(4);
-          
           console.log(`📐 ENGINE DIAGNOSTIC PROOF:`);
           console.log(`   -> Position: X=${drawX.toFixed(0)}px, Y=${drawY.toFixed(0)}px`);
           console.log(`   -> Real-Time Skew Factor: ${calculatedSkew} (Must equal 0.0000 for normal proportions)`);
@@ -204,6 +206,4 @@ class Scene {
       ctx.restore();
     }
   }
-
-
 }
