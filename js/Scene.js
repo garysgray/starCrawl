@@ -1,11 +1,6 @@
-// ── Scene ─────────────────────────────────────────────────────
-// Owns everything visual and temporal — stars, ships, crawl, cues.
-// Controller owns infrastructure (audio, hud). Scene owns the experience.
-
-const timerModes = {
-  COUNTDOWN: "countdown", 
-  COUNTUP: "countup" 
-};
+// ── Scene.js ───────────────────────────────────────────────────
+// Owns the visual simulation components: stars, background objects, ships, crawl.
+// Driven directly by the SpaceDirector lifecycle clock.
 
 class Scene {
   constructor(audio) {
@@ -13,10 +8,9 @@ class Scene {
     this.crawl = new Crawl(audio);
     this.ships = [];
 
-    // 1. Pick your catalog target item securely
-    const selectedBlueprint = CELESTIAL_CATALOG.deathStarAlpha; // Switch to gasGiantAlpha to load the blue planet!
+    // Factory picks the correct subclass blueprint from the Celestial Catalog
+    const selectedBlueprint = CELESTIAL_CATALOG.deathStarAlpha;
     
-    // 2. DYNAMIC CELESTIAL FACTORY LOOKUP: Spawns the explicit subclass matching your object token
     let activeSpaceObject;
     if (selectedBlueprint && selectedBlueprint.objectType === 'station') {
         activeSpaceObject = new SpaceStationEntity(selectedBlueprint);
@@ -24,105 +18,93 @@ class Scene {
         activeSpaceObject = new PlanetEntity(selectedBlueprint || CELESTIAL_CATALOG.gasGiantAlpha);
     }
 
-    // UNIFIED UNIVERSE REFACTOR: Replaced planets array with generic space object tracker array
+    // Tracker array for background celestial entities
     this.backgroundObjects = [ activeSpaceObject ];
 
+    // Viewport Canvases Initialization
     this.canvas = document.getElementById('ships');
     this.ctx = this.canvas.getContext('2d');
     this.renderer = new ShipRenderer();
 
-    // UNIFIED UNIVERSE REFACTOR: Purged planet DOM tags and updated variables to matching SpaceObject tokens
     this.spaceObjCanvas = document.getElementById('space-object');
     this.spaceObjCtx    = this.spaceObjCanvas.getContext('2d');
     this.spaceObjRenderer = new SpaceObjectRenderer();
 
-    // Spawn timer — initial delay before first ship
-    this.spawnTimer = new Timer('ShipSpawner', 5, timerModes.COUNTDOWN, false);
-    this.spawnTimer.start();
+    // Central Space Director hooks into the experience
+    this.director = new SpaceDirector(audio, this);
+    this.director.changeSimulationMode('med');
 
     this._resize();
-    window.addEventListener('resize', () => 
-    {
-      // 1. Scene updates its internal canvas pixel resolutions first
+    window.addEventListener('resize', () => {
       this._resize();
-      
-      // 2. BROADCAST SIGNAL: Call the crawl engine's individual bounds calculator
-      if (this.crawl && typeof this.crawl.recalculateBounds === 'function') 
-      {
+      if (this.crawl && typeof this.crawl.recalculateBounds === 'function') {
         this.crawl.recalculateBounds();
+      }
+      if (this.director && typeof this.director.recalibrateOnResize === 'function') {
+        this.director.recalibrateOnResize();
       }
     });
   }
 
-  // ---- Setup ----------------------------------------------------------------
-  _resize()
-  {
+  // ---- Setup & Viewport Bounds ----------------------------------------------
+  _resize() {
     const w = window.innerWidth;
     const h = window.innerHeight;
 
-    // FIX ALIGNMENT: Force canvas size to match the real browser window edge-to-edge
     this.canvas.width            = w;
     this.canvas.height           = h;
-    
-    // UNIFIED UNIVERSE REFACTOR: Realigned width/height bindings to spaceObj tokens
     this.spaceObjCanvas.width    = w;
     this.spaceObjCanvas.height   = h;
 
-    // CANVAS BOUND DIAGNOSTIC: Tracks exactly how your canvas boundaries overlay your screen
-    const shipsCanvas = document.getElementById('ships');
-    if (shipsCanvas) {
-        const rect = shipsCanvas.getBoundingClientRect();
-        console.log(`📊 CANVAS BOUND DIAGNOSTIC:`);
-        console.log(`   -> Browser Window: Width=${w}px, Height=${h}px`);
-        console.log(`   -> Canvas Layout Element: Left=${rect.left}px, Top=${rect.top}px, Width=${rect.width}px, Height=${rect.height}px`);
+    if (Math.random() < 0.01) {
+        console.log(`📊 CANVAS BOUND DIAGNOSTIC: Width=${w}px | Height=${h}px`);
     }
   }
 
-  // ---- Spawning -------------------------------------------------------------
-  _getInterval()
-  {
-    return window.innerWidth >= CONFIG.shipInterval.breakpoint
-      ? CONFIG.shipInterval.wide
-      : CONFIG.shipInterval.narrow;
-  }
-
-  _spawnShip()
-  {
+  // ── DETACHED TIME-SYNCHRONIZED SPAWNER ────────────────────────────────────
+  // Listens strictly to your true config file defaults! No more forced adjustments.
+  triggerPrecisionSpawn(deltaOvershoot, calculatedVelocity) {
     const totalInFleet = this.ships.length;
+    if (totalInFleet > 0) return;
 
-    if (totalInFleet > 0) {
-      return;
+    // Instantiates ship using your exact, pristine SceneConfig data layout
+    const newShip = new Ship(CONFIG.shipTuning); 
+    newShip.hasEnteredViewLog = false;
+    
+    // Honor your exact spawnY configuration value (e.g. 1000) perfectly
+    if (CONFIG.shipTuning && CONFIG.shipTuning.spawnY !== undefined) {
+        newShip.yPct = CONFIG.shipTuning.spawnY; 
     }
 
-    const targetConfig = SHIP_CATALOG.starDestroyerClass;
-    if (targetConfig) {
-      const newShip = new Ship(targetConfig);
-      newShip.hasEnteredViewLog = false; 
-      this.ships.push(newShip);
-      console.log(`🚀 SHIP SPAWNED! Active Fleet Size: ${this.ships.length} | Initial Position: Y=${newShip.yPct}%`);
+    const screenHeight = this.canvas.height || window.innerHeight;
+    
+    // Map the time-calibrated physics step speed vector from the SpaceDirector
+    if (calculatedVelocity !== undefined) {
+        newShip.speed = ((calculatedVelocity / screenHeight) * 100) / 60;
     }
+    
+    // Process standard delta sub-frame offsets cleanly
+    const fixedTimestep = (CONFIG.System && CONFIG.System.FIXED_TIMESTEP) 
+        ? CONFIG.System.FIXED_TIMESTEP 
+        : 1 / 60;
+        
+    const initialOffset = (newShip.speed * deltaOvershoot * fixedTimestep * 60);
+    newShip.yPct -= initialOffset;
+
+    this.ships.push(newShip);
   }
 
-  _handleSpawnTick()
-  {
-    const nextDelaySec = this._getInterval() / 1000;
-    this.spawnTimer.setAndStart(nextDelaySec);
-    this._spawnShip();
-  }
-
-  // ---- Loop -----------------------------------------------------------------
-  update(dt)
-  {
+  // ---- Loop Core ------------------------------------------------------------
+  update(dt) {
     this.stars.update(dt);
     this.crawl.update(dt);
+    this.director.update(dt);
 
-    if (this.spawnTimer.update(dt)) this._handleSpawnTick();
-
-    // UNIFIED UNIVERSE REFACTOR: Progress updates over generic backgroundObjects loop
+    // Progress background object states
     this.backgroundObjects.forEach(obj => obj.update(dt));
 
-    for (let i = this.ships.length - 1; i >= 0; i--)
-    {
+    // Update fleet positions
+    for (let i = this.ships.length - 1; i >= 0; i--) {
       const s = this.ships[i];
       s.update(null, dt);
 
@@ -137,70 +119,56 @@ class Scene {
     }
   }
 
-  // Accepts the sub-frame timing 'alpha' fraction from the controller
   draw(alpha) {
     this.stars.draw(alpha);
-    this._drawBackgroundEntities(alpha); // UNIFIED UNIVERSE REFACTOR: Call renamed visual rendering loop
+    this._drawBackgroundEntities(alpha); 
     this._drawShips(alpha);
     this.crawl.draw(alpha);
   }
 
-  // UNIFIED UNIVERSE REFACTOR: Consolidated drawing sweep over background space entities
   _drawBackgroundEntities(alpha) {
     const ctx = this.spaceObjCtx;
     const w = this.spaceObjCanvas.width;
     const h = this.spaceObjCanvas.height;
 
     ctx.clearRect(0, 0, w, h);
-    
-    // Iterates cleanly over whatever combination of subclasses occupy your background tracker
     this.backgroundObjects.forEach(obj => {
       this.spaceObjRenderer.draw(ctx, obj, w, h, alpha);
     });
   }
 
-  _drawShips(alpha)
-  {
+  _drawShips(alpha) {
     const { ctx, canvas } = this;
     const w = canvas.width;  
     const h = canvas.height; 
 
     ctx.clearRect(0, 0, w, h);
     
-    const SHIP_BASE_H = 900;
     const PCT_DIVISOR = 100;
-    const fixedTimestep = CONFIG.System.FIXED_TIMESTEP;
+    const fixedTimestep = CONFIG.System.FIXED_TIMESTEP || 0.0166;
 
-    for (let i = 0; i < this.ships.length; i++)
-    {
+    for (let i = 0; i < this.ships.length; i++) {
       const s = this.ships[i];
       
-      const screenScaleY = SHIP_BASE_H / h;
-      
-      const interpolatedYPct = s.yPct - (s.speed * alpha * fixedTimestep * 60 * screenScaleY);
+      // RESTORED: Standard subtraction syntax matching baseline engine behaviors
+      const interpolatedYPct = s.yPct - (s.speed * alpha * fixedTimestep * 60);
       const interpolatedXPct = s.xPct + (s.driftX * alpha * fixedTimestep * 60);
 
       const drawX = (interpolatedXPct / PCT_DIVISOR) * w;
       const drawY = (interpolatedYPct / PCT_DIVISOR) * h;
       
+      if (Math.random() < 0.01 || alpha === 0) { 
+          console.log(`✈️ STARSHIP CONSOLE READOUT: X=${s.xPct.toFixed(1)}% | Y=${s.yPct.toFixed(1)}% | Pixel DrawY=${drawY.toFixed(0)}px`);
+      }
+
       const finalScale = s.getScale(w, null);
 
       ctx.save();
       ctx.translate(drawX, drawY);
-      
       ctx.scale(1, s.flattenY);
       ctx.rotate(Math.PI * s.rotation);
       ctx.scale(finalScale, finalScale);
-      
       ctx.globalAlpha = s.alpha;
-
-      if (alpha === 0 || Math.random() < 0.01) { 
-          const currentTransform = ctx.getTransform();
-          const calculatedSkew = (currentTransform.b + currentTransform.c).toFixed(4);
-          console.log(`📐 ENGINE DIAGNOSTIC PROOF:`);
-          console.log(`   -> Position: X=${drawX.toFixed(0)}px, Y=${drawY.toFixed(0)}px`);
-          console.log(`   -> Real-Time Skew Factor: ${calculatedSkew} (Must equal 0.0000 for normal proportions)`);
-      }
 
       this.renderer.draw(ctx);
       ctx.restore();

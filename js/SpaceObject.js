@@ -61,7 +61,7 @@ class PlanetEntity extends SpaceObject {
             { count: 40, minR: 3, maxR: 8, color: 'rgba(0,0,0,0.3)', rimColor: 'rgba(255,255,255,0.18)', depthColor: 'rgba(0,0,0,0.35)', latBand: [0.0, 0.25] }
         ];
         
-        console.log(`🪐 CELESTIAL FACTORY: Instantiated a PlanetEntity subclass object layout.`);
+        //console.log(`🪐 CELESTIAL FACTORY: Instantiated a PlanetEntity subclass object layout.`);
     }
 
     // SELF-RENDERING: This child class explicitly owns the random organic gas planet math
@@ -187,7 +187,7 @@ class SpaceStationEntity extends SpaceObject {
         this.dishXRatio     = config.dishXRatio ?? 0.165; 
         this.dishYRatio     = config.dishYRatio ?? 0.38;  
 
-        console.log(`🛰️ CELESTIAL FACTORY: Instantiated a SpaceStationEntity cinematic layout refactor.`);
+        //console.log(`🛰️ CELESTIAL FACTORY: Instantiated a SpaceStationEntity cinematic layout refactor.`);
     }
 
 

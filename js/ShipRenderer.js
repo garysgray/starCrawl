@@ -60,10 +60,10 @@ class ShipRenderer
     // DIAGNOSTIC LAYER: Check what the transformation matrix looks like right before drawing lines
     if (Math.random() < 0.01) {
       const transform = ctx.getTransform();
-      console.log(`🎨 SHIP RENDER ENGINE:`);
-      console.log(`   -> Matrix Scale X: ${transform.a.toFixed(4)} (Horizontal Stretch)`);
-      console.log(`   -> Matrix Scale Y: ${transform.d.toFixed(4)} (Vertical Stretch)`);
-      console.log(`   -> Skew Factors: B=${transform.b.toFixed(4)}, C=${transform.c.toFixed(4)}`);
+      // console.log(`🎨 SHIP RENDER ENGINE:`);
+      // console.log(`   -> Matrix Scale X: ${transform.a.toFixed(4)} (Horizontal Stretch)`);
+      // console.log(`   -> Matrix Scale Y: ${transform.d.toFixed(4)} (Vertical Stretch)`);
+      // console.log(`   -> Skew Factors: B=${transform.b.toFixed(4)}, C=${transform.c.toFixed(4)}`);
     }
 
     if (!this.hullGrad) {

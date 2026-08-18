@@ -32,13 +32,13 @@ class SpaceObjectRenderer {
         const px = canvasW * spaceObject.x;
         const py = canvasH * spaceObject.y;
 
-        if (alpha === 0 || Math.random() < 0.01) {
-            console.log(`🌍 SPACE OBJECT PROOF MONITOR:`);
-            console.log(`   -> Active Entity Render Type: ${spaceObject.type.toUpperCase()}`);
-            console.log(`   -> Frame Dimensions: Width=${canvasW}px, Height=${canvasH}px`);
-            console.log(`   -> Layout Multiplier: ${layoutScale.toFixed(4)}`);
-            console.log(`   -> Positioning Vector: Center=[X:${px.toFixed(0)}px, Y:${py.toFixed(0)}px] | Radius=${r.toFixed(1)}px`);
-        }
+        // if (alpha === 0 || Math.random() < 0.01) {
+        //     console.log(`🌍 SPACE OBJECT PROOF MONITOR:`);
+        //     console.log(`   -> Active Entity Render Type: ${spaceObject.type.toUpperCase()}`);
+        //     console.log(`   -> Frame Dimensions: Width=${canvasW}px, Height=${canvasH}px`);
+        //     console.log(`   -> Layout Multiplier: ${layoutScale.toFixed(4)}`);
+        //     console.log(`   -> Positioning Vector: Center=[X:${px.toFixed(0)}px, Y:${py.toFixed(0)}px] | Radius=${r.toFixed(1)}px`);
+        //}
 
         // SELF-RENDERING HANDSHAKE:
         // Instead of the renderer guessing how to draw the skin, it asks the 
