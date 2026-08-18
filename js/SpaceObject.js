@@ -104,10 +104,19 @@ class PlanetEntity extends SpaceObject {
             const yMin = (grp.latBand && Array.isArray(grp.latBand)) ? grp.latBand[0] * h : 0;
             const yMax = (grp.latBand && Array.isArray(grp.latBand)) ? grp.latBand[1] * h : h;
 
+            // 👇 THE FIXED GEOMETRIC CRATER DISTRIBUTION:
+            // Spaced evenly across the available texture grid coordinates forever
             for (let i = 0; i < count; i++) {
-                const x = Math.random() * w;
-                const y = yMin + Math.random() * (yMax - yMin);
-                const cr = minR + Math.pow(Math.random(), 2) * (maxR - minR);
+                // Distribute horizontally using clean, static steps
+                const x = (i / count) * w;
+                
+                // Distribute vertically using a deterministic mathematical offset wave pattern
+                const waveOffset = Math.sin(i * 2.3) * 0.5 + 0.5;
+                const y = yMin + waveOffset * (yMax - yMin);
+                
+                // Cycle through a predictable sequence of crater sizes instead of pure random scales
+                const sizeStep = (i % 4) / 3;
+                const cr = minR + sizeStep * (maxR - minR);
 
                 const rX = cr;
                 const rY = cr / verticalStretchRatio;
@@ -125,31 +134,22 @@ class PlanetEntity extends SpaceObject {
 
                     // 1. Base Crater Solid Base Pocket
                     tctx.fillStyle = color;
-                    tctx.beginPath(); 
-                    tctx.arc(0, 0, cr, 0, Math.PI * 2); 
-                    tctx.fill();
+                    tctx.beginPath(); tctx.arc(0, 0, cr, 0, Math.PI * 2); tctx.fill();
 
-                    // 2. Internal Radial Depth Shadow (Safe absolute vectors)
+                    // 2. Internal Radial Depth Shadow
                     const depthGrad = tctx.createRadialGradient(0, 0, cr * 0.3, 0, 0, cr);
                     depthGrad.addColorStop(0, 'transparent'); 
                     depthGrad.addColorStop(1, depthColor);
-                    
                     tctx.fillStyle = depthGrad; 
-                    tctx.beginPath(); 
-                    tctx.arc(0, 0, cr, 0, Math.PI * 2); 
-                    tctx.fill();
+                    tctx.beginPath(); tctx.arc(0, 0, cr, 0, Math.PI * 2); tctx.fill();
 
-                    // 3. Softened Rim Highlight with Edge Anti-Aliasing
+                    // 3. Softened Rim Highlight
                     tctx.save();
                     tctx.strokeStyle = rimColor; 
                     tctx.lineWidth = Math.max(1, cr * 0.08);
-                    
                     tctx.shadowBlur = 2;
                     tctx.shadowColor = rimColor;
-                    
-                    tctx.beginPath(); 
-                    tctx.arc(0, 0, cr * 0.92, 0, Math.PI * 2); 
-                    tctx.stroke();
+                    tctx.beginPath(); tctx.arc(0, 0, cr * 0.92, 0, Math.PI * 2); tctx.stroke();
                     tctx.restore();
                     
                     tctx.restore();
@@ -173,23 +173,27 @@ class SpaceStationEntity extends SpaceObject {
         this.craters        = config.craters || []; 
         this.rings          = []; // Hard lock out natural rings
         
-        // 👇 DEFINE STATION SHARP MECHANICAL LIGHTING METRICS NATIVELY:
-        this.rimOpacity     = config.rimOpacity ?? 0.24; // High contrast popped rim light
-        this.shadowStops    = config.shadowStops || [
-            { stop: 0.15, color: 'transparent' },
-            { stop: 0.70, color: 'rgba(0, 0, 0, 0.82)' },
-            { stop: 1.0,  color: 'rgba(3, 4, 6, 0.98)' } // Sharp terminator dark drop
-        ];
+        // 👇 1. THE CINEMATIC REVERSE LIGHTING OVERHAUL:
+        // Lift the hull paint to a lighter, cool model-kit primer gray for maximum contrast
+        this.baseColor      = config.baseColor || '#7d8491'; 
+        
+        // Kill the center hot-spot bubble completely by defaulting the undercoat sphere to absolute black
+        this.baseHighlight  = config.baseHighlight || '#000000';
 
-        this.dishXRatio = config.dishXRatio ?? 0.165; // Horizontal position scale (0.0 to 1.0)
-        this.dishYRatio = config.dishYRatio ?? 0.38;  // Vertical position scale (0.0 to 1.0)
+        // Pop the rim-light up slightly to catch the beautiful left-hand structural crest curves
+        this.rimOpacity     = config.rimOpacity ?? 0.26; 
 
-        console.log(`🛰️ CELESTIAL FACTORY: Instantiated a SpaceStationEntity subclass layout.`);
+        // Preserving your custom adjustable weapon variables completely pristine!
+        this.dishXRatio     = config.dishXRatio ?? 0.165; 
+        this.dishYRatio     = config.dishYRatio ?? 0.38;  
+
+        console.log(`🛰️ CELESTIAL FACTORY: Instantiated a SpaceStationEntity cinematic layout refactor.`);
     }
+
 
     // SELF-RENDERING placeholder for station architecture panels (to be built out next!)
         // SELF-RENDERING: This child class explicitly owns the mechanical station surface assets
-    generateTexture(w, h, cosmeticConfig) {
+        generateTexture(w, h, cosmeticConfig) {
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         const tctx = canvas.getContext('2d');
@@ -198,76 +202,74 @@ class SpaceStationEntity extends SpaceObject {
         tctx.fillStyle = this.baseColor;
         tctx.fillRect(0, 0, w, h);
         
-        // 2. High-Density Mechanical Panel Grids (Horizontal & Vertical Strips)
+        // 2. Uniform Horizontal Panel Latitudes
+        // We use a fixed loop index to place perfectly spaced plates
         tctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
-        for (let i = 0; i < this.bandCount; i++) {
-            const stripeY = (i / this.bandCount) * h;
-            const stripeH = 2 + Math.random() * 6;
+        const horizontalLinesCount = 20; 
+        for (let i = 0; i <= horizontalLinesCount; i++) {
+            const stripeY = (i / horizontalLinesCount) * h;
+            // Alternates line thickness elegantly between 2px and 4px based on rows
+            const stripeH = (i % 2 === 0) ? 4 : 2; 
             tctx.fillRect(0, stripeY, w, stripeH);
         }
         
-        tctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
-        for (let j = 0; j < 40; j++) {
-            const panelX = Math.random() * w;
-            const panelW = 40 + Math.random() * 120;
+        // 3. Structured Vertical Hull Plating Blocks
+        // Creates a predictable mechanical block pattern across the texture width
+        tctx.fillStyle = 'rgba(255, 255, 255, 0.025)';
+        const verticalColumnsCount = 16;
+        for (let j = 0; j < verticalColumnsCount; j++) {
+            const panelX = (j / verticalColumnsCount) * w;
+            // Offsets every other panel block slightly to look like real armor plates
+            const panelW = (w / verticalColumnsCount) * 0.45;
             tctx.fillRect(panelX, 0, panelW, h);
         }
 
-        // 3. Render Surface Technical Hull Noise Grit
-        tctx.fillStyle = `rgba(255, 255, 255, ${cosmeticConfig.GRIT_OPACITY * 0.4})`;
-        for (let i = 0; i < this.gritCount; i++) {
-            const x = Math.random() * w;
-            const y = Math.random() * h;
-            tctx.fillRect(x, y, 1, 1);
+        // 4. Deterministic Surface Technical Noise Grit
+        // Replaced Math.random with a fixed math stride loop so grit stays static
+        tctx.fillStyle = `rgba(255, 255, 255, ${cosmeticConfig.GRIT_OPACITY * 0.3})`;
+        const gritStrideX = 17;
+        const gritStrideY = 11;
+        for (let x = 0; x < w; x += gritStrideX) {
+            for (let y = 0; y < h; y += gritStrideY) {
+                // Creates a pseudo-noise pattern that never shifts or recalculates randomly
+                const shiftY = (x % 3 === 0) ? y + 4 : y;
+                tctx.fillRect(x, shiftY, 1, 1);
+            }
         }
 
-        // 4. Immaculate Deep Equatorial Structural Trench Channel
+        // 5. Immaculate Deep Equatorial Structural Trench Channel
         const trenchY = h * 0.5;
         const trenchH = 14; 
         
-        // Dark inner trench shadow groove
         tctx.fillStyle = 'rgba(10, 12, 16, 0.88)';
         tctx.fillRect(0, trenchY - trenchH / 2, w, trenchH);
         
-        // Top and Bottom high-contrast metallic lips/rims for depth
         tctx.fillStyle = 'rgba(255, 255, 255, 0.09)';
         tctx.fillRect(0, (trenchY - trenchH / 2) - 2, w, 2);
         tctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         tctx.fillRect(0, trenchY + trenchH / 2, w, 2);
 
-        // 5. Anamorphic Superlaser Weapon Dish Matrix Placement
-        // 👇 CHANGED: Reads positions directly from the configuration properties instance
+        // 6. Anamorphic Superlaser Weapon Dish Matrix Placement
         const dishX = w * this.dishXRatio;
         const dishY = h * this.dishYRatio;
-        
-        // Counteract the 3D spherical polar distortion via horizontal elongation
         const rX = 96;
         const rY = 68;
 
-        // Base Dish Concave Dark Recess
         tctx.fillStyle = 'rgba(28, 31, 38, 0.9)';
-        tctx.beginPath();
-        tctx.ellipse(dishX, dishY, rX, rY, 0, 0, Math.PI * 2);
-        tctx.fill();
+        tctx.beginPath(); tctx.ellipse(dishX, dishY, rX, rY, 0, 0, Math.PI * 2); tctx.fill();
 
-        // Layered Internal Mechanical Core Grooves
-        tctx.strokeStyle = 'rgba(12, 14, 18, 0.95)';
-        tctx.lineWidth = 4;
+        tctx.strokeStyle = 'rgba(12, 14, 18, 0.95)'; tctx.lineWidth = 4;
         tctx.beginPath(); tctx.ellipse(dishX, dishY, rX * 0.6, rY * 0.6, 0, 0, Math.PI * 2); tctx.stroke();
         tctx.beginPath(); tctx.ellipse(dishX, dishY, rX * 0.3, rY * 0.3, 0, 0, Math.PI * 2); tctx.stroke();
 
-        // Inner Superlaser Central Core Firing Node
         tctx.fillStyle = 'rgba(15, 17, 22, 0.98)';
         tctx.beginPath(); tctx.ellipse(dishX, dishY, rX * 0.12, rY * 0.12, 0, 0, Math.PI * 2); tctx.fill();
 
-        // Outer Highlighted Structured Bezel Rim
-        tctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
-        tctx.lineWidth = 3;
-        tctx.beginPath();
-        tctx.ellipse(dishX, dishY, rX * 0.98, rY * 0.98, 0, 0, Math.PI * 2);
-        tctx.stroke();
+        tctx.strokeStyle = 'rgba(255, 255, 255, 0.06)'; tctx.lineWidth = 3;
+        tctx.beginPath(); tctx.ellipse(dishX, dishY, rX * 0.98, rY * 0.98, 0, 0, Math.PI * 2); tctx.stroke();
         
         return canvas;
     }
+
 
 }

@@ -14,7 +14,7 @@ class Scene {
     this.ships = [];
 
     // 1. Pick your catalog target item securely
-    const selectedBlueprint = CELESTIAL_CATALOG.gasGiantAlpha; // Switch to gasGiantAlpha to load the blue planet!
+    const selectedBlueprint = CELESTIAL_CATALOG.deathStarAlpha; // Switch to gasGiantAlpha to load the blue planet!
     
     // 2. DYNAMIC CELESTIAL FACTORY LOOKUP: Spawns the explicit subclass matching your object token
     let activeSpaceObject;

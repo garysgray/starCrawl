@@ -3,6 +3,9 @@ const COSMETIC_CONFIG = { GRIT_OPACITY: 0.05, CRATER_RIM_OPACITY: 0.1, SUN_HIGHL
 
 class SpaceObjectRenderer {
     constructor() {
+        this.lightX = 0.5;
+        this.lightY = -0.25;
+
         // Universal offscreen buffer caches
         this.bufferCanvas = document.createElement('canvas');
         this.bufferCtx = this.bufferCanvas.getContext('2d');
@@ -38,6 +41,8 @@ class SpaceObjectRenderer {
         }
 
         // SELF-RENDERING HANDSHAKE:
+        // Instead of the renderer guessing how to draw the skin, it asks the 
+        // space object entity to generate its own custom procedural canvas texture!
         if (!spaceObject.textureMap) {
             spaceObject.textureMap = spaceObject.generateTexture(
                 PHYSICS_CONFIG.TEXTURE_WIDTH, 
@@ -50,7 +55,7 @@ class SpaceObjectRenderer {
             this.bufferCanvas.width = Math.ceil(r * 2);
             this.bufferCanvas.height = Math.ceil(r * 2);
 
-            // Forces high-quality bilinear filtering on the 1px column slices
+            // Forces the browser to run high-quality bilinear filtering on 1px column slice steps
             this.bufferCtx.imageSmoothingEnabled = true;
             this.bufferCtx.imageSmoothingQuality = 'high';
         }
@@ -65,14 +70,14 @@ class SpaceObjectRenderer {
             step: s.step * spaceObject.scale * layoutScale
         }));
 
-        this._drawSphereBase(this.bufferCtx, r, spaceObject);
+        this._drawSphereBase(this.bufferCtx, r);
 
         this.bufferCtx.save();
         this.bufferCtx.rotate(spaceObject.tilt);
         this._drawSurfaceTexture(this.bufferCtx, r, spaceObject, scaledSliceCache, alpha);
         this.bufferCtx.restore();
 
-        this._drawShadowOverlay(this.bufferCtx, r, spaceObject);
+        this._drawShadowOverlay(this.bufferCtx, r, spaceObject.type);
         this._drawAtmosphereGlow(this.bufferCtx, r, spaceObject);
         this.bufferCtx.restore();
 
@@ -92,9 +97,8 @@ class SpaceObjectRenderer {
         ctx.restore();
     }
 
-       _drawSphereBase(ctx, r, spaceObject) {
-        // Reads lighting centers dynamically from individual entity configurations
-        const lx = r * spaceObject.lightX, ly = r * spaceObject.lightY;
+    _drawSphereBase(ctx, r) {
+        const lx = r * this.lightX, ly = r * this.lightY;
         const grad = ctx.createRadialGradient(lx, ly, r * 0.1, 0, 0, r);
         grad.addColorStop(0, COSMETIC_CONFIG.SUN_HIGHLIGHT);
         grad.addColorStop(1, COSMETIC_CONFIG.DEEP_SPACE_DARK);
@@ -117,7 +121,6 @@ class SpaceObjectRenderer {
             ? 0 
             : (currentRot % (Math.PI * 2)) * (mapW / (Math.PI * 2));
 
-        // 👇 FIXED: Restored complete slicing loop parameters
         for (let i = 0; i < scaledSlices.length; i++) {
             const slice = scaledSlices[i];
             const safeTX = (slice.txOffset + scrollX) % (mapW - 1);
@@ -133,15 +136,18 @@ class SpaceObjectRenderer {
         ctx.restore();
     }
 
-    _drawShadowOverlay(ctx, r, spaceObject) {
-        // 👇 FIXED: Restored top initialization arguments missing from fragment cut
-        const ox = r * spaceObject.lightX * 0.5, oy = r * spaceObject.lightY * 0.5;
+    _drawShadowOverlay(ctx, r, objectType) {
+        const ox = r * this.lightX * 0.5, oy = r * this.lightY * 0.5;
         const grad = ctx.createRadialGradient(ox, oy, r * 0.1, ox, oy, r * 1.15);
         
-        // Iterates over custom subclass shadow configurations
-        spaceObject.shadowStops.forEach(s => {
-            grad.addColorStop(s.stop, s.color);
-        });
+        if (objectType === 'station') {
+            grad.addColorStop(0.15, 'transparent');
+            grad.addColorStop(0.70, 'rgba(0, 0, 0, 0.82)');
+            grad.addColorStop(1, 'rgba(3, 4, 6, 0.98)');
+        } else {
+            grad.addColorStop(0.3, 'transparent');
+            grad.addColorStop(1, COSMETIC_CONFIG.TERMINATOR_SHADOW);
+        }
         
         ctx.fillStyle = grad;
         ctx.beginPath();
@@ -150,8 +156,8 @@ class SpaceObjectRenderer {
     }
 
 
-    _drawAtmosphereGlow(ctx, r, spaceObject) {
-        // 👇 UPDATED: Automatically maps to the fine-tuned, class-defined opacity values
+            _drawAtmosphereGlow(ctx, r, spaceObject) {
+        // 👇 FIX: Read directly from the individual class configuration instance
         const maxOpacity = spaceObject.rimOpacity;
         
         ctx.save();
@@ -182,7 +188,8 @@ class SpaceObjectRenderer {
         ctx.restore();
     }
 
-   _drawRingHalf(ctx, r, spaceObject, rg, layer) {
+
+        _drawRingHalf(ctx, r, spaceObject, rg, layer) {
         // Validation check: Artificial station types skip planetary space dust systems entirely
         if (!rg || spaceObject.type === 'station') return;
 
