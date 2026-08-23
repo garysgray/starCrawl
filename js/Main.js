@@ -37,6 +37,7 @@ function safeStartGame()
 }
 
 // Confirms canvases exist and have been sized by the browser
+//seems liek thi sis redundent and not needed FIXX
 function readyToStart()
 {
   const stars = document.getElementById('stars');

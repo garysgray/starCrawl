@@ -146,7 +146,7 @@ class Crawl
       literal scale profile container height. The text loops smoothly to the bottom 
       the exact frame it clears the view!
     */
-    if (this.yPos < -this.content.scrollHeight)
+    if (this.yPos <= -this.content.scrollHeight)
     {
       this.yPos = window.innerHeight;
       

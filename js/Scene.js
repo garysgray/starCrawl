@@ -2,8 +2,10 @@
 // Owns the visual simulation components: stars, background objects, ships, crawl.
 // Driven directly by the SpaceDirector lifecycle clock.
 
-class Scene {
-  constructor(audio) {
+class Scene 
+{
+  constructor(audio) 
+  {
     this.stars = new StarField();
     this.crawl = new Crawl(audio);
     this.ships = [];
@@ -12,9 +14,12 @@ class Scene {
     const selectedBlueprint = CELESTIAL_CATALOG.deathStarAlpha;
     
     let activeSpaceObject;
-    if (selectedBlueprint && selectedBlueprint.objectType === 'station') {
+    if (selectedBlueprint && selectedBlueprint.objectType === 'station') 
+    {
         activeSpaceObject = new SpaceStationEntity(selectedBlueprint);
-    } else {
+    } 
+    else 
+    {
         activeSpaceObject = new PlanetEntity(selectedBlueprint || CELESTIAL_CATALOG.gasGiantAlpha);
     }
 
@@ -35,19 +40,23 @@ class Scene {
     this.director.changeSimulationMode('med');
 
     this._resize();
-    window.addEventListener('resize', () => {
+    window.addEventListener('resize', () =>
+    {
       this._resize();
-      if (this.crawl && typeof this.crawl.recalculateBounds === 'function') {
+      if (this.crawl && typeof this.crawl.recalculateBounds === 'function') 
+      {
         this.crawl.recalculateBounds();
       }
-      if (this.director && typeof this.director.recalibrateOnResize === 'function') {
+      if (this.director && typeof this.director.recalibrateOnResize === 'function') 
+      {
         this.director.recalibrateOnResize();
       }
     });
   }
 
   // ---- Setup & Viewport Bounds ----------------------------------------------
-  _resize() {
+  _resize() 
+  {
     const w = window.innerWidth;
     const h = window.innerHeight;
 
@@ -56,7 +65,8 @@ class Scene {
     this.spaceObjCanvas.width    = w;
     this.spaceObjCanvas.height   = h;
 
-    if (Math.random() < 0.01) {
+    if (Math.random() < 0.01) 
+    {
         console.log(`📊 CANVAS BOUND DIAGNOSTIC: Width=${w}px | Height=${h}px`);
     }
   }
