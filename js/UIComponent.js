@@ -35,6 +35,10 @@ class UIComponent
       }
   }
 
+  // ── PUBLIC GETTERS AND SETTERS ──────────────────────────────
+  get listeners() { return this.#listeners; }
+  set listeners(val) { this.#listeners = val; }
+
   // ── EVENT MAP CONTRACT ─────────────────────────────────────
   // Returns the configuration checklist of element mappings.
   // UIManager uses this to connect DOM elements to UI actions.

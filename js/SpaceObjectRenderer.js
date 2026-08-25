@@ -2,16 +2,24 @@ const PHYSICS_CONFIG = { BASE_RADIUS: 420, TEXTURE_WIDTH: 2400, TEXTURE_HEIGHT: 
 const COSMETIC_CONFIG = { GRIT_OPACITY: 0.05, CRATER_RIM_OPACITY: 0.1, SUN_HIGHLIGHT: '#7e8db5', DEEP_SPACE_DARK: '#0a0b14', TERMINATOR_SHADOW: '#000000', ATMOS_INNER_RADIUS: 0.9, ATMOS_OUTER_RADIUS: 1.05 };
 
 class SpaceObjectRenderer {
+    // ── PRIVATE PROPERTIES ───────────────────────────────────────
+    #lightX = 0.5;
+    #lightY = -0.25;
+    #bufferCanvas;
+    #bufferCtx;
+    #sliceCache = [];
+
+    // ── CONSTRUCTOR ────────────────────────────────────────────
     constructor() {
-        this.lightX = 0.5;
-        this.lightY = -0.25;
+        this.#lightX = 0.5;
+        this.#lightY = -0.25;
 
         // Universal offscreen buffer caches
-        this.bufferCanvas = document.createElement('canvas');
-        this.bufferCtx = this.bufferCanvas.getContext('2d');
+        this.#bufferCanvas = document.createElement('canvas');
+        this.#bufferCtx = this.#bufferCanvas.getContext('2d');
 
         // Precompute the heavy 120-iteration trigonometry loops exactly once
-        this.sliceCache = [];
+        this.#sliceCache = [];
         const baseR = PHYSICS_CONFIG.BASE_RADIUS;
         const step = (baseR * 2) / PHYSICS_CONFIG.SLICE_COUNT;
         
@@ -19,30 +27,32 @@ class SpaceObjectRenderer {
             const sx = -baseR + (i * step);
             const angle = Math.asin(sx / baseR); 
             const txOffset = ((angle + Math.PI / 2) / Math.PI) * (PHYSICS_CONFIG.TEXTURE_WIDTH / 2);
-            this.sliceCache.push({ sx, txOffset, step });
+            this.#sliceCache.push({ sx, txOffset, step });
         }
     }
 
+    // ── PUBLIC GETTERS & SETTERS ────────────────────────────────
+    get lightX() { return this.#lightX; }
+    set lightX(val) { this.#lightX = val; }
+
+    get lightY() { return this.#lightY; }
+    set lightY(val) { this.#lightY = val; }
+
+    get bufferCanvas() { return this.#bufferCanvas; }
+    get bufferCtx() { return this.#bufferCtx; }
+    get sliceCache() { return this.#sliceCache; }
+
     draw(ctx, spaceObject, canvasW, canvasH, alpha = 1.0) {
-        // FIXED MULTI-DEVICE SCALE FILTER
-        const rawScale = canvasW / 1280;
+        // UNIFORM MULTI-DEVICE SCALE PRESERVING 1:1 CIRCULAR GEOMETRY
+        const minDim = Math.min(canvasW, canvasH);
+        const rawScale = minDim / 800;
         const layoutScale = Math.max(0.65, rawScale);
         
         const r = PHYSICS_CONFIG.BASE_RADIUS * spaceObject.scale * layoutScale;
         const px = canvasW * spaceObject.x;
         const py = canvasH * spaceObject.y;
 
-        // if (alpha === 0 || Math.random() < 0.01) {
-        //     console.log(`🌍 SPACE OBJECT PROOF MONITOR:`);
-        //     console.log(`   -> Active Entity Render Type: ${spaceObject.type.toUpperCase()}`);
-        //     console.log(`   -> Frame Dimensions: Width=${canvasW}px, Height=${canvasH}px`);
-        //     console.log(`   -> Layout Multiplier: ${layoutScale.toFixed(4)}`);
-        //     console.log(`   -> Positioning Vector: Center=[X:${px.toFixed(0)}px, Y:${py.toFixed(0)}px] | Radius=${r.toFixed(1)}px`);
-        //}
-
         // SELF-RENDERING HANDSHAKE:
-        // Instead of the renderer guessing how to draw the skin, it asks the 
-        // space object entity to generate its own custom procedural canvas texture!
         if (!spaceObject.textureMap) {
             spaceObject.textureMap = spaceObject.generateTexture(
                 PHYSICS_CONFIG.TEXTURE_WIDTH, 
@@ -51,54 +61,54 @@ class SpaceObjectRenderer {
             );
         }
         
-        if (this.bufferCanvas.width !== Math.ceil(r * 2)) {
-            this.bufferCanvas.width = Math.ceil(r * 2);
-            this.bufferCanvas.height = Math.ceil(r * 2);
+        if (this.#bufferCanvas.width !== Math.ceil(r * 2)) {
+            this.#bufferCanvas.width = Math.ceil(r * 2);
+            this.#bufferCanvas.height = Math.ceil(r * 2);
 
             // Forces the browser to run high-quality bilinear filtering on 1px column slice steps
-            this.bufferCtx.imageSmoothingEnabled = true;
-            this.bufferCtx.imageSmoothingQuality = 'high';
+            this.#bufferCtx.imageSmoothingEnabled = true;
+            this.#bufferCtx.imageSmoothingQuality = 'high';
         }
 
-        this.bufferCtx.clearRect(0, 0, this.bufferCanvas.width, this.bufferCanvas.height);
-        this.bufferCtx.save();
-        this.bufferCtx.translate(r, r);
+        this.#bufferCtx.clearRect(0, 0, this.#bufferCanvas.width, this.#bufferCanvas.height);
+        this.#bufferCtx.save();
+        this.#bufferCtx.translate(r, r);
 
-        const scaledSliceCache = this.sliceCache.map(s => ({
+        const scaledSliceCache = this.#sliceCache.map(s => ({
             sx: s.sx * spaceObject.scale * layoutScale,
             txOffset: s.txOffset,
             step: s.step * spaceObject.scale * layoutScale
         }));
 
-        this._drawSphereBase(this.bufferCtx, r);
+        this.#drawSphereBase(this.#bufferCtx, r);
 
-        this.bufferCtx.save();
-        this.bufferCtx.rotate(spaceObject.tilt);
-        this._drawSurfaceTexture(this.bufferCtx, r, spaceObject, scaledSliceCache, alpha);
-        this.bufferCtx.restore();
+        this.#bufferCtx.save();
+        this.#bufferCtx.rotate(spaceObject.tilt);
+        this.#drawSurfaceTexture(this.#bufferCtx, r, spaceObject, scaledSliceCache, alpha);
+        this.#bufferCtx.restore();
 
-        this._drawShadowOverlay(this.bufferCtx, r, spaceObject.type);
-        this._drawAtmosphereGlow(this.bufferCtx, r, spaceObject);
-        this.bufferCtx.restore();
+        this.#drawShadowOverlay(this.#bufferCtx, r, spaceObject.type);
+        this.#drawAtmosphereGlow(this.#bufferCtx, r, spaceObject);
+        this.#bufferCtx.restore();
 
         ctx.save();
         ctx.translate(px, py);
 
         if (spaceObject.rings && spaceObject.rings.length > 0) {
-            spaceObject.rings.forEach(rg => this._drawRingHalf(ctx, r, spaceObject, rg, 'back'));
+            spaceObject.rings.forEach(rg => this.#drawRingHalf(ctx, r, spaceObject, rg, 'back'));
         }
         
-        ctx.drawImage(this.bufferCanvas, -r, -r);
+        ctx.drawImage(this.#bufferCanvas, -r, -r);
         
         if (spaceObject.rings && spaceObject.rings.length > 0) {
-            spaceObject.rings.forEach(rg => this._drawRingHalf(ctx, r, spaceObject, rg, 'front'));
+            spaceObject.rings.forEach(rg => this.#drawRingHalf(ctx, r, spaceObject, rg, 'front'));
         }
 
         ctx.restore();
     }
 
-    _drawSphereBase(ctx, r) {
-        const lx = r * this.lightX, ly = r * this.lightY;
+    #drawSphereBase(ctx, r) {
+        const lx = r * this.#lightX, ly = r * this.#lightY;
         const grad = ctx.createRadialGradient(lx, ly, r * 0.1, 0, 0, r);
         grad.addColorStop(0, COSMETIC_CONFIG.SUN_HIGHLIGHT);
         grad.addColorStop(1, COSMETIC_CONFIG.DEEP_SPACE_DARK);
@@ -108,7 +118,7 @@ class SpaceObjectRenderer {
         ctx.fill();
     }
 
-    _drawSurfaceTexture(ctx, r, spaceObject, scaledSlices, alpha) {
+    #drawSurfaceTexture(ctx, r, spaceObject, scaledSlices, alpha) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(0, 0, r * 0.995, 0, Math.PI * 2);
@@ -136,8 +146,8 @@ class SpaceObjectRenderer {
         ctx.restore();
     }
 
-    _drawShadowOverlay(ctx, r, objectType) {
-        const ox = r * this.lightX * 0.5, oy = r * this.lightY * 0.5;
+    #drawShadowOverlay(ctx, r, objectType) {
+        const ox = r * this.#lightX * 0.5, oy = r * this.#lightY * 0.5;
         const grad = ctx.createRadialGradient(ox, oy, r * 0.1, ox, oy, r * 1.15);
         
         if (objectType === 'station') {
@@ -155,9 +165,7 @@ class SpaceObjectRenderer {
         ctx.fill();
     }
 
-
-            _drawAtmosphereGlow(ctx, r, spaceObject) {
-        // 👇 FIX: Read directly from the individual class configuration instance
+    #drawAtmosphereGlow(ctx, r, spaceObject) {
         const maxOpacity = spaceObject.rimOpacity;
         
         ctx.save();
@@ -188,24 +196,16 @@ class SpaceObjectRenderer {
         ctx.restore();
     }
 
-
-        _drawRingHalf(ctx, r, spaceObject, rg, layer) {
-        // Validation check: Artificial station types skip planetary space dust systems entirely
+    #drawRingHalf(ctx, r, spaceObject, rg, layer) {
         if (!rg || spaceObject.type === 'station') return;
 
         const innerR = r * rg.innerRadius;
         const outerR = r * rg.outerRadius;
         
         ctx.save();
-        
-        // Match drawing angles cleanly to the ring object configuration pitch
         ctx.rotate(rg.tilt);
-        
-        // Scale the canvas vertical Y-axis down to compress the circles into 3D ellipses
         ctx.scale(1, 0.28); 
 
-        // Set up the layer clipping coordinates to handle depth perspective
-        // Front layers clip below the equator; back layers clip above the equator
         ctx.beginPath();
         if (layer === 'front') {
             ctx.rect(-outerR - 10, 0, (outerR * 2) + 20, outerR + 10);
@@ -214,7 +214,6 @@ class SpaceObjectRenderer {
         }
         ctx.clip();
 
-        // Render the concentric ring geometry with custom linear texturing
         const ringGrad = ctx.createRadialGradient(0, 0, innerR, 0, 0, outerR);
         ringGrad.addColorStop(0, 'rgba(0,0,0,0)');
         ringGrad.addColorStop(0.1, rg.color);
@@ -231,5 +230,4 @@ class SpaceObjectRenderer {
 
         ctx.restore();
     }
-
 }

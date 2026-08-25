@@ -4,23 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   
-  <!-- RESTORED: Your original working font configuration -->
-  <link rel="preconnect" href="https://googleapis.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=News+Cycle:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/style.css">
-  <title>Space Crawl</title>
+  <title>Star Crawl</title>
 </head>
 <body>
 
-   <!-- ── Scene Layers ───────────────────────────────────────── -->
+  <!-- ── Scene Layers ───────────────────────────────────────── -->
   <canvas id="stars"></canvas>
   <div id="nebula"></div>
   <canvas id="ships"></canvas>
   <div id="vignette"></div>
   <canvas id="noise"></canvas>
-  
   <canvas id="space-object"></canvas>
 
   <!-- ── Crawl ──────────────────────────────────────────────── -->
@@ -95,33 +93,34 @@
     </div>
   </div>
 
-  <a href="https://github.com"
-     target="_blank"
-     style="position:fixed; bottom:10px; left:10px; z-index:200;">
-    GitHub
-  </a>
-
-  <!-- ── Scripts (order matters — dependencies before dependents) ── -->
+  <!-- ── Script Loading (Strict Dependency Order) ──────────── -->
+  <!-- 1. Data Catalogs -->
   <script src="data/crawl-text.js"></script>
-  <!-- UNIFIED UNIVERSE REFACTOR: Linked to the updated database record catalog -->
-  
   <script src="data/CelestialCatalog.js"></script>
-  <script src="data/ShipCatalog.js"></script> 
-  <script src="js/SpaceDirector.js"></script>  
-  <script src="js/Scene.js"></script>
+  <script src="data/ShipCatalog.js"></script>
+
+  <!-- 2. Core Configuration & Base Classes -->
+  <script src="js/Config.js"></script>
+  <script src="js/SoundRecipes.js"></script>
   <script src="js/UIComponent.js"></script>
+  <script src="js/AudioManager.js"></script>
+
+  <!-- 3. Subsystem Managers & Coordinators -->
   <script src="js/UIManager.js"></script>
-  <script src="js/Timer.js"></script>
-  <script src="js/SceneConfig.js"></script>
-  <script src="js/Ship.js"></script>          
+  <script src="js/SpaceDirector.js"></script>
+
+  <!-- 4. Visual Entities & Specialized Renderers -->
+  <script src="js/StarField.js"></script>
+  <script src="js/Ship.js"></script>
   <script src="js/ShipRenderer.js"></script>
   <script src="js/SpaceObject.js"></script>
   <script src="js/SpaceObjectRenderer.js"></script>
-  <script src="js/StarField.js"></script>
-  <script src="js/SpaceAudio.js"></script>
   <script src="js/Crawl.js"></script>
-  <script src="js/HUD.js"></script>
-  <script src="js/Controller.js"></script>
+  <script src="js/Hud.js"></script>
+  <script src="js/Scene.js"></script>
+
+  <!-- 5. Root Coordinator & Entry Point -->
+  <script src="js/Engine.js"></script>
   <script src="js/Main.js"></script>
 
 </body>

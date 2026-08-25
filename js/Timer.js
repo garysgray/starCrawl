@@ -25,14 +25,30 @@ class Timer
     }
 
     // ---------------------------------------------------
-    // Getters
+    // Getters and Setters
     // ---------------------------------------------------
     get name() { return this.#name; }
+    set name(val) { this.#name = val; }
+
+    get duration() { return this.#duration; }
+    set duration(val) { this.#duration = val; }
+
     get mode() { return this.#mode; }
+    set mode(val) { this.#mode = val; }
+
     get active() { return this.#active; }
+    set active(val) { this.#active = val; }
+
+    get loop() { return this.#loop; }
+    set loop(val) { this.#loop = val; }
+
     get timeLeft() { return Math.max(0, this.#timeLeft); }
+    set timeLeft(val) { this.#timeLeft = val; }
+
     get elapsedTime() { return this.#elapsedTime; }
-    get finished() { return !this.#active && this.#timeLeft <= 0;}
+    set elapsedTime(val) { this.#elapsedTime = val; }
+
+    get finished() { return !this.#active && this.#timeLeft <= 0; }
 
     get progress()
     {

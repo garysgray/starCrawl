@@ -1,211 +1,60 @@
 // ── ShipRenderer ─────────────────────────────────────────────
-// All colours and gradient stops in one place for easy tweaking
-
-// Hull
-const HULL_DARK    = '#6e7382';
-const HULL_MID     = '#aaafbe';
-const HULL_SHADOW  = 'rgba(100, 105, 120, 1)';
-
-// Upper deck
-const UPPER_DARK   = '#a0a5b4';
-const UPPER_MID    = '#e6ebf5';
-
-// Panels / structure
-const DARK_PANEL   = 'rgb(21, 22, 23)';
-const SPINE_COL    = 'rgb(154, 163, 181)';
-const ENGINE_HOUS  = 'rgba(70, 75, 90, 1)';
-const TAIL_TRIM    = 'rgb(160, 165, 175)';
-
-// Cockpit
-const COCKPIT_DARK = 'rgba(30, 35, 50, 0.9)';
-const COCKPIT_GLOW = 'rgba(120, 180, 255, 0.6)';
-
-// Engines
-const ENG_OUTER    = 'rgba(50, 55, 70, 1)';
-const ENG_MID      = 'rgba(80, 120, 180, 0.9)';
-const ENG_CORE     = 'rgba(240, 248, 255, 1)';
-const ENG_PLUME    = 'rgba(100, 180, 255,';   // alpha appended at runtime
-const ENG_TAIL     = 'rgba(120, 180, 255, 0.6)';
-
-// Engine positions (Y offsets from ship centre)
-const ENGINE_Y = [-44, 0, 44];
+// Decoupled Generic Renderer: Handles coordinate transformations, resolution-independent
+// scaling, interpolation, and alpha blending, delegating procedural geometry to Ship entities.
 
 class ShipRenderer
 {
-  // 1. ADDED CONSTRUCTOR: Run once to lock static gradients in memory cache
+  // ── PRIVATE PROPERTIES ───────────────────────────────────────
+  #smoothingEnabled = true;
+
+  // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor(ctx)
   {
-    // If a canvas context is available, pre-render the static gradients immediately
-    if (ctx) {
-      this._initStaticGradients(ctx);
-    }
+    this.#smoothingEnabled = true;
   }
 
-  // Helper function to build gradients if context isn't ready in the constructor
-  _initStaticGradients(ctx)
+  // ── PUBLIC GETTERS & SETTERS ────────────────────────────────
+  get smoothingEnabled() { return this.#smoothingEnabled; }
+  set smoothingEnabled(val) { this.#smoothingEnabled = val; }
+
+  // ── DECOUPLED RENDERING PIPELINE ────────────────────────────
+  draw(ctx, ship, canvasW, canvasH, alpha = 1.0, fixedTimestep = 1 / 60)
   {
-    this.hullGrad = ctx.createLinearGradient(0, -110, 0, 110);
-    this.hullGrad.addColorStop(0,   HULL_DARK);
-    this.hullGrad.addColorStop(0.5, HULL_MID);
-    this.hullGrad.addColorStop(1,   HULL_DARK);
+    if (!ctx) return;
 
-    this.upperGrad = ctx.createLinearGradient(0, -55, 0, 55);
-    this.upperGrad.addColorStop(0,   UPPER_DARK);
-    this.upperGrad.addColorStop(0.5, UPPER_MID);
-    this.upperGrad.addColorStop(1,   UPPER_DARK);
-  }
+    // Direct mode if ship is not provided or if called with transformed context
+    if (!ship) return;
 
-    draw(ctx)
-  {
-    // DIAGNOSTIC LAYER: Check what the transformation matrix looks like right before drawing lines
-    if (Math.random() < 0.01) {
-      const transform = ctx.getTransform();
-      // console.log(`🎨 SHIP RENDER ENGINE:`);
-      // console.log(`   -> Matrix Scale X: ${transform.a.toFixed(4)} (Horizontal Stretch)`);
-      // console.log(`   -> Matrix Scale Y: ${transform.d.toFixed(4)} (Vertical Stretch)`);
-      // console.log(`   -> Skew Factors: B=${transform.b.toFixed(4)}, C=${transform.c.toFixed(4)}`);
-    }
+    const PCT_DIVISOR = 100;
+    const w = canvasW || (ctx.canvas ? ctx.canvas.width : window.innerWidth);
+    const h = canvasH || (ctx.canvas ? ctx.canvas.height : window.innerHeight);
 
-    if (!this.hullGrad) {
-      this._initStaticGradients(ctx);
-    }
+    // Dynamic frame-delta sub-pixel interpolation
+    const interpolatedYPct = ship.yPct - (ship.speed * alpha * fixedTimestep * 60);
+    const interpolatedXPct = ship.xPct + (ship.driftX * alpha * fixedTimestep * 60);
 
-    this._drawHull(ctx, this.hullGrad, this.upperGrad);
-    this._drawSidePanels(ctx);
-    this._drawSpine(ctx);
-    this._drawTail(ctx, this.hullGrad, this.upperGrad);
-    this._drawEngineHousing(ctx);
-    this._drawEngines(ctx);
-    this._drawCockpit(ctx);
-  }
+    const drawX = (interpolatedXPct / PCT_DIVISOR) * w;
+    const drawY = (interpolatedYPct / PCT_DIVISOR) * h;
+    const finalScale = ship.getScale(w, null);
 
+    ctx.save();
+    ctx.translate(drawX, drawY);
+    ctx.scale(1, ship.flattenY);
+    ctx.rotate(Math.PI * ship.rotation);
+    ctx.scale(finalScale, finalScale);
+    ctx.globalAlpha = Math.max(0, Math.min(1, ship.alpha));
 
-  // ---- Hull -----------------------------------------------------------------
-  _drawHull(ctx, hullGrad, upperGrad)
-  {
-    ctx.fillStyle = hullGrad;
-    ctx.beginPath();
-    ctx.moveTo(250, 0); ctx.lineTo(-180, -110); ctx.lineTo(-180, 110);
-    ctx.closePath(); ctx.fill();
-
-    ctx.fillStyle = HULL_SHADOW;
-    ctx.beginPath();
-    ctx.moveTo(225, 0); ctx.lineTo(-105, -60); ctx.lineTo(-165, -60);
-    ctx.lineTo(-165, 60); ctx.lineTo(-105, 60);
-    ctx.closePath(); ctx.fill();
-
-    ctx.fillStyle = upperGrad;
-    ctx.beginPath();
-    ctx.moveTo(220, 0); ctx.lineTo(-100, -55); ctx.lineTo(-160, -55);
-    ctx.lineTo(-160, 55); ctx.lineTo(-100, 55);
-    ctx.closePath(); ctx.fill();
-  }
-
-  // ---- Side Panels ----------------------------------------------------------
-  _drawSidePanels(ctx)
-  {
-    ctx.fillStyle = DARK_PANEL;
-
-    // Port (top)
-    ctx.beginPath();
-    ctx.moveTo(162, -10); ctx.lineTo(-100, -80); ctx.lineTo(-180, -110);
-    ctx.lineTo(-160, -55); ctx.lineTo(-60, -40);
-    ctx.closePath(); ctx.fill();
-
-    // Starboard (bottom)
-    ctx.beginPath();
-    ctx.moveTo(162, 10); ctx.lineTo(-100, 80); ctx.lineTo(-180, 110);
-    ctx.lineTo(-160, 55); ctx.lineTo(-60, 40);
-    ctx.closePath(); ctx.fill();
-  }
-
-  // ---- Spine ----------------------------------------------------------------
-  _drawSpine(ctx)
-  {
-    ctx.fillStyle = SPINE_COL;
-    ctx.beginPath();
-    ctx.moveTo(200, 0); ctx.lineTo(50, -8); ctx.lineTo(-140, -6);
-    ctx.lineTo(-140, 6); ctx.lineTo(50, 8);
-    ctx.closePath(); ctx.fill();
-  }
-
-  // ---- Tail -----------------------------------------------------------------
-  _drawTail(ctx, hullGrad, upperGrad)
-  {
-    ctx.fillStyle = DARK_PANEL;
-    ctx.beginPath();
-    ctx.moveTo(-68, -14); ctx.lineTo(-68, 14); ctx.lineTo(-130, 35); ctx.lineTo(-130, -35);
-    ctx.closePath(); ctx.fill();
-
-    ctx.fillStyle = ENG_TAIL;
-    ctx.beginPath();
-    ctx.moveTo(-73, -13); ctx.lineTo(-73, 13); ctx.lineTo(-127, 33); ctx.lineTo(-127, -33);
-    ctx.closePath(); ctx.fill();
-
-    ctx.fillStyle = DARK_PANEL;
-    ctx.beginPath();
-    ctx.moveTo(-74, -12); ctx.lineTo(-74, 12); ctx.lineTo(-130, -35); ctx.lineTo(-130, 35);
-    ctx.closePath(); ctx.fill();
-
-    ctx.fillStyle = upperGrad;
-    ctx.beginPath();
-    ctx.moveTo(-77, -11); ctx.lineTo(-77, 11); ctx.lineTo(-127, 31); ctx.lineTo(-127, -31);
-    ctx.closePath(); ctx.fill();
-  }
-
-  // ---- Engine Housing -------------------------------------------------------
-  _drawEngineHousing(ctx)
-  {
-    ctx.fillStyle = ENGINE_HOUS;
-    ctx.fillRect(-180, -65, 40, 130);
-  }
-
-  // ---- Engines --------------------------------------------------------------
-  _drawEngines(ctx)
-  {
-    const flicker = Math.random() * 0.2 + 0.8;   
-    const time    = Date.now() * 0.005;            
-
-    ENGINE_Y.forEach(y =>
+    // SELF-RENDERING HANDSHAKE:
+    // Ask the Ship entity subclass to draw its custom procedural geometry!
+    if (typeof ship.drawShip === 'function')
     {
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      
-      // Plumes must stay dynamic because of the random frame flicker value,
-      // but caching the hull above means we are down to just 3 clean variations.
-      const plume = ctx.createLinearGradient(-162, y, -320, y);
-      plume.addColorStop(0, `${ENG_PLUME} ${0.5 * flicker})`);
-      plume.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = plume;
-      ctx.beginPath();
-      ctx.moveTo(-162, y - 20);
-      ctx.lineTo(-280 - (Math.sin(time + y) * 15), y);   
-      ctx.lineTo(-162, y + 20);
-      ctx.fill();
-      ctx.restore();
+      ship.drawShip(ctx);
+    }
+    else if (typeof ship.draw === 'function')
+    {
+      ship.draw(ctx);
+    }
 
-      ctx.fillStyle = ENG_OUTER;
-      ctx.beginPath(); ctx.arc(-162, y, 24, 0, Math.PI * 2); ctx.fill();
-
-      ctx.fillStyle = ENG_MID;
-      ctx.beginPath(); ctx.arc(-162, y, 18, 0, Math.PI * 2); ctx.fill();
-
-      ctx.fillStyle = ENG_CORE;
-      ctx.beginPath(); ctx.arc(-162, y, 6 + (Math.sin(time) * 1), 0, Math.PI * 2); ctx.fill();
-    });
-  }
-
-  // ---- Cockpit --------------------------------------------------------------
-  _drawCockpit(ctx)
-  {
-    ctx.fillStyle = COCKPIT_DARK;
-    ctx.beginPath();
-    ctx.moveTo(60, -6); ctx.lineTo(140, -2); ctx.lineTo(140, 2); ctx.lineTo(60, 6);
-    ctx.closePath(); ctx.fill();
-
-    ctx.fillStyle = COCKPIT_GLOW;
-    ctx.beginPath();
-    ctx.moveTo(80, -3); ctx.lineTo(125, -1); ctx.lineTo(125, 1); ctx.lineTo(80, 3);
-    ctx.closePath(); ctx.fill();
+    ctx.restore();
   }
 }

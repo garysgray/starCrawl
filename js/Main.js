@@ -1,16 +1,8 @@
 // ── Main ──────────────────────────────────────────────────────
 // Entry point — owns the fixed-timestep game loop
 
-// ---- Config -----------------------------------------------------------------
-const FIXED_TIMESTEP = 1 / 60;        // seconds per logic step — locked at 60hz
-const TIMESTEP_NORM  = FIXED_TIMESTEP * 60; // normalised dt — always 1.0 at 60hz
-const MAX_FRAME_TIME = 0.25;           // caps spiral-of-death if tab loses focus
-const MAX_STEPS      = 5;             // max logic steps per frame before bail
-const SAFE_START_MS  = 100;           // poll interval waiting for canvas to size
-const IDLE_TIMEOUT   = 200;           // ms delay before kicking off the loop
-
 // ---- Globals ----------------------------------------------------------------
-let myController;
+let myEngine;
 let lastTime    = performance.now();
 let accumulator = 0;
 
@@ -19,25 +11,31 @@ window.addEventListener('load', () =>
 {
   try
   {
-    myController = new Controller();
-    myController.start();
+    myEngine = new Engine();
     safeStartGame();
   }
-  catch (e) { console.error('Initialization failed:', e); }
+  catch (e)
+  {
+    console.error('Initialization failed:', e);
+  }
 });
 
 // ---- Startup ----------------------------------------------------------------
 // Polls until canvases have real dimensions before starting the loop
 function safeStartGame()
 {
-  if (!readyToStart()) { setTimeout(safeStartGame, SAFE_START_MS); return; }
+  if (!readyToStart())
+  {
+    setTimeout(safeStartGame, CONFIG.System.SAFE_START_MS);
+    return;
+  }
+
   window.requestIdleCallback
-    ? requestIdleCallback(startLoop, { timeout: IDLE_TIMEOUT })
-    : setTimeout(startLoop, IDLE_TIMEOUT);
+    ? requestIdleCallback(startLoop, { timeout: CONFIG.System.IDLE_TIMEOUT })
+    : setTimeout(startLoop, CONFIG.System.IDLE_TIMEOUT);
 }
 
 // Confirms canvases exist and have been sized by the browser
-//seems liek thi sis redundent and not needed FIXX
 function readyToStart()
 {
   const stars = document.getElementById('stars');
@@ -57,27 +55,29 @@ function startLoop()
 function gameLoop()
 {
   const now       = performance.now();
-  const frameTime = Math.min((now - lastTime) / 1000, MAX_FRAME_TIME);
+  const frameTime = Math.min((now - lastTime) / 1000, CONFIG.System.MAX_FRAME_TIME);
   lastTime        = now;
   accumulator    += frameTime;
 
   let steps = 0;
-  while (accumulator >= FIXED_TIMESTEP && steps < MAX_STEPS)
+  const fixedTimestep = CONFIG.System.FIXED_TIMESTEP;
+  const timestepNorm  = fixedTimestep * 60; // always 1.0 at 60hz
+
+  while (accumulator >= fixedTimestep && steps < CONFIG.System.MAX_STEPS)
   {
-    myController.update(TIMESTEP_NORM); // always 1.0 — speeds tuned at 60hz
-    accumulator -= FIXED_TIMESTEP;      // drain real elapsed seconds
+    myEngine.update(timestepNorm);
+    accumulator -= fixedTimestep;
     steps++;
   }
 
   // Hit step cap — discard leftover to prevent runaway accumulator
-  if (steps >= MAX_STEPS) accumulator = 0;
+  if (steps >= CONFIG.System.MAX_STEPS) accumulator = 0;
 
-  // 1. Calculate the interpolation fraction (where we are between physics ticks)
-  const alpha = accumulator / FIXED_TIMESTEP;
+  // Calculate interpolation fraction (where we are between physics ticks)
+  const alpha = accumulator / fixedTimestep;
 
-  // 2. Pass alpha straight to the draw controller
-  myController.drawScene(alpha);
+  // Pass alpha to the draw pipeline
+  myEngine.draw(alpha);
 
   requestAnimationFrame(gameLoop);
-
 }
