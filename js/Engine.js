@@ -19,23 +19,23 @@ class Engine
   // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor()
   {
-    // 1. Pull user settings from storage
+    // Pull user settings from storage
     const settings = this.#loadSettingsFromStorage();
 
-    // 2. Instantiate core subsystem layers (Composition Root)
+    // Instantiate core subsystem layers (Composition Root)
     this.#audio = new AudioManager();
     this.#scene = new Scene(this.#audio);
     this.#director = new SpaceDirector(this.#audio, this.#scene);
     this.#hud = new HUD(CONFIG.hud);
     this.#ui = new UIManager(this.#audio, this.#scene, this.#director);
 
-    // 3. UI Component Registration
+    // UI Component Registration
     this.#ui.registerComponent('primary_hud', this.#hud);
 
-    // 4. Handle browser audio autoplay restriction
+    // Handle browser audio autoplay restriction
     document.addEventListener('click', () => { this.#audio.resume(); }, { once: true });
 
-    // 5. Trigger system startup sequence
+    // Trigger system startup sequence
     this.start(settings.activeSpeed, settings.activeStars);
   }
 

@@ -1,5 +1,6 @@
 // ── SpaceObject Base Class ────────────────────────────────────────────────────
-class SpaceObject {
+class SpaceObject 
+{
     // ── PRIVATE PROPERTIES ───────────────────────────────────────
     #type;
     #x;
@@ -19,8 +20,10 @@ class SpaceObject {
     #shadowStops = [];
 
     // ── CONSTRUCTOR ────────────────────────────────────────────
-    constructor(config = {}) {
-        if (this.constructor === SpaceObject) {
+    constructor(config = {}) 
+    {
+        if (this.constructor === SpaceObject) 
+        {
             throw new TypeError("Cannot instantiate base abstract class SpaceObject directly.");
         }
         
@@ -93,20 +96,23 @@ class SpaceObject {
     get shadowStops() { return this.#shadowStops; }
     set shadowStops(val) { this.#shadowStops = val; }
 
-    update(dt) {
+    update(dt) 
+    {
         this.#rotation += this.#spinSpeed * dt;
         if (this.#driftX !== 0) this.#x += this.#driftX * dt;
         if (this.#driftY !== 0) this.#y += this.#driftY * dt;
     }
 
     // Abstract method interface ensuring every child object knows how to build its skin
-    generateTexture(w, h, cosmeticConfig) {
+    generateTexture(w, h, cosmeticConfig) 
+    {
         throw new Error("Abstract method generateTexture() must be implemented by subclass.");
     }
 }
 
 // ── Planet Subclass Component ─────────────────────────────────────────────────
-class PlanetEntity extends SpaceObject {
+class PlanetEntity extends SpaceObject 
+{
     // ── PRIVATE PROPERTIES ───────────────────────────────────────
     #gritCount;
     #bandCount;
@@ -116,7 +122,8 @@ class PlanetEntity extends SpaceObject {
     #craters = [];
 
     // ── CONSTRUCTOR ────────────────────────────────────────────
-    constructor(config = {}) {
+    constructor(config = {}) 
+    {
         super(config);
         
         this.#gritCount      = config.gritCount ?? 5000;
@@ -158,7 +165,8 @@ class PlanetEntity extends SpaceObject {
     set craters(val) { this.#craters = val; }
 
     // SELF-RENDERING: This child class explicitly owns the random organic gas planet math
-    generateTexture(w, h, cosmeticConfig) {
+    generateTexture(w, h, cosmeticConfig) 
+    {
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         const tctx = canvas.getContext('2d');
@@ -189,7 +197,8 @@ class PlanetEntity extends SpaceObject {
         const verticalStretchRatio = 1.45;
 
         // Render Crater Layers
-        this.#craters.forEach(grp => {
+        this.#craters.forEach(grp => 
+        {
             const count = grp.count ?? 80;
             const minR = grp.minR ?? 5;
             const maxR = grp.maxR ?? 40;
@@ -245,7 +254,8 @@ class PlanetEntity extends SpaceObject {
 }
 
 // ── Space Station Subclass Component ──────────────────────────────────────────
-class SpaceStationEntity extends SpaceObject {
+class SpaceStationEntity extends SpaceObject 
+{
     // ── PRIVATE PROPERTIES ───────────────────────────────────────
     #gritCount;
     #bandCount;
@@ -258,7 +268,8 @@ class SpaceStationEntity extends SpaceObject {
     #dishYRatio;
 
     // ── CONSTRUCTOR ────────────────────────────────────────────
-    constructor(config = {}) {
+    constructor(config = {}) 
+    {
         super(config);
         
         this.#gritCount      = config.gritCount ?? 9500;
@@ -305,28 +316,31 @@ class SpaceStationEntity extends SpaceObject {
     set dishYRatio(val) { this.#dishYRatio = val; }
 
     // SELF-RENDERING: This child class explicitly owns the mechanical station surface assets
-    generateTexture(w, h, cosmeticConfig) {
+    generateTexture(w, h, cosmeticConfig) 
+    {
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         const tctx = canvas.getContext('2d');
         
-        // 1. Solid Base Hull Metal Coating
+        // Solid Base Hull Metal Coating
         tctx.fillStyle = this.baseColor;
         tctx.fillRect(0, 0, w, h);
         
-        // 2. Uniform Horizontal Panel Latitudes
+        // Uniform Horizontal Panel Latitudes
         tctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
         const horizontalLinesCount = 20; 
-        for (let i = 0; i <= horizontalLinesCount; i++) {
+        for (let i = 0; i <= horizontalLinesCount; i++) 
+        {
             const stripeY = (i / horizontalLinesCount) * h;
             const stripeH = (i % 2 === 0) ? 4 : 2; 
             tctx.fillRect(0, stripeY, w, stripeH);
         }
         
-        // 3. Structured Vertical Hull Plating Blocks
+        // Structured Vertical Hull Plating Blocks
         tctx.fillStyle = 'rgba(255, 255, 255, 0.025)';
         const verticalColumnsCount = 16;
-        for (let j = 0; j < verticalColumnsCount; j++) {
+        for (let j = 0; j < verticalColumnsCount; j++) 
+            {
             const panelX = (j / verticalColumnsCount) * w;
             const panelW = (w / verticalColumnsCount) * 0.45;
             tctx.fillRect(panelX, 0, panelW, h);
@@ -336,8 +350,10 @@ class SpaceStationEntity extends SpaceObject {
         tctx.fillStyle = `rgba(255, 255, 255, ${cosmeticConfig.GRIT_OPACITY * 0.3})`;
         const gritStrideX = 17;
         const gritStrideY = 11;
-        for (let x = 0; x < w; x += gritStrideX) {
-            for (let y = 0; y < h; y += gritStrideY) {
+        for (let x = 0; x < w; x += gritStrideX) 
+        {
+            for (let y = 0; y < h; y += gritStrideY) 
+            {
                 const shiftY = (x % 3 === 0) ? y + 4 : y;
                 tctx.fillRect(x, shiftY, 1, 1);
             }

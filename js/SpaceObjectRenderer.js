@@ -1,7 +1,8 @@
 const PHYSICS_CONFIG = { BASE_RADIUS: 420, TEXTURE_WIDTH: 2400, TEXTURE_HEIGHT: 1000, SLICE_COUNT: 120, SLICE_OVERLAP: 0.5, MAP_STRETCH_MULT: 4 };
 const COSMETIC_CONFIG = { GRIT_OPACITY: 0.05, CRATER_RIM_OPACITY: 0.1, SUN_HIGHLIGHT: '#7e8db5', DEEP_SPACE_DARK: '#0a0b14', TERMINATOR_SHADOW: '#000000', ATMOS_INNER_RADIUS: 0.9, ATMOS_OUTER_RADIUS: 1.05 };
 
-class SpaceObjectRenderer {
+class SpaceObjectRenderer 
+{
     // ── PRIVATE PROPERTIES ───────────────────────────────────────
     #lightX = 0.5;
     #lightY = -0.25;
@@ -10,7 +11,8 @@ class SpaceObjectRenderer {
     #sliceCache = [];
 
     // ── CONSTRUCTOR ────────────────────────────────────────────
-    constructor() {
+    constructor() 
+    {
         this.#lightX = 0.5;
         this.#lightY = -0.25;
 
@@ -42,7 +44,10 @@ class SpaceObjectRenderer {
     get bufferCtx() { return this.#bufferCtx; }
     get sliceCache() { return this.#sliceCache; }
 
-    draw(ctx, spaceObject, canvasW, canvasH, alpha = 1.0) {
+    draw(ctx, spaceObject, canvasW, canvasH, alpha = 1.0, opacity = 1.0) 
+    {
+        if (opacity <= 0.001) return;
+
         // UNIFORM MULTI-DEVICE SCALE PRESERVING 1:1 CIRCULAR GEOMETRY
         const minDim = Math.min(canvasW, canvasH);
         const rawScale = minDim / 800;
@@ -53,7 +58,8 @@ class SpaceObjectRenderer {
         const py = canvasH * spaceObject.y;
 
         // SELF-RENDERING HANDSHAKE:
-        if (!spaceObject.textureMap) {
+        if (!spaceObject.textureMap) 
+        {
             spaceObject.textureMap = spaceObject.generateTexture(
                 PHYSICS_CONFIG.TEXTURE_WIDTH, 
                 PHYSICS_CONFIG.TEXTURE_HEIGHT, 
@@ -61,7 +67,8 @@ class SpaceObjectRenderer {
             );
         }
         
-        if (this.#bufferCanvas.width !== Math.ceil(r * 2)) {
+        if (this.#bufferCanvas.width !== Math.ceil(r * 2)) 
+        {
             this.#bufferCanvas.width = Math.ceil(r * 2);
             this.#bufferCanvas.height = Math.ceil(r * 2);
 
@@ -92,22 +99,29 @@ class SpaceObjectRenderer {
         this.#bufferCtx.restore();
 
         ctx.save();
+        if (opacity < 0.999) 
+        {
+            ctx.globalAlpha = opacity;
+        }
         ctx.translate(px, py);
 
-        if (spaceObject.rings && spaceObject.rings.length > 0) {
+        if (spaceObject.rings && spaceObject.rings.length > 0) 
+        {
             spaceObject.rings.forEach(rg => this.#drawRingHalf(ctx, r, spaceObject, rg, 'back'));
         }
         
         ctx.drawImage(this.#bufferCanvas, -r, -r);
         
-        if (spaceObject.rings && spaceObject.rings.length > 0) {
+        if (spaceObject.rings && spaceObject.rings.length > 0) 
+        {
             spaceObject.rings.forEach(rg => this.#drawRingHalf(ctx, r, spaceObject, rg, 'front'));
         }
 
         ctx.restore();
     }
 
-    #drawSphereBase(ctx, r) {
+    #drawSphereBase(ctx, r) 
+    {
         const lx = r * this.#lightX, ly = r * this.#lightY;
         const grad = ctx.createRadialGradient(lx, ly, r * 0.1, 0, 0, r);
         grad.addColorStop(0, COSMETIC_CONFIG.SUN_HIGHLIGHT);
@@ -118,7 +132,8 @@ class SpaceObjectRenderer {
         ctx.fill();
     }
 
-    #drawSurfaceTexture(ctx, r, spaceObject, scaledSlices, alpha) {
+    #drawSurfaceTexture(ctx, r, spaceObject, scaledSlices, alpha) 
+    {
         ctx.save();
         ctx.beginPath();
         ctx.arc(0, 0, r * 0.995, 0, Math.PI * 2);
@@ -131,7 +146,8 @@ class SpaceObjectRenderer {
             ? 0 
             : (currentRot % (Math.PI * 2)) * (mapW / (Math.PI * 2));
 
-        for (let i = 0; i < scaledSlices.length; i++) {
+        for (let i = 0; i < scaledSlices.length; i++) 
+        {
             const slice = scaledSlices[i];
             const safeTX = (slice.txOffset + scrollX) % (mapW - 1);
 
@@ -146,15 +162,19 @@ class SpaceObjectRenderer {
         ctx.restore();
     }
 
-    #drawShadowOverlay(ctx, r, objectType) {
+    #drawShadowOverlay(ctx, r, objectType) 
+    {
         const ox = r * this.#lightX * 0.5, oy = r * this.#lightY * 0.5;
         const grad = ctx.createRadialGradient(ox, oy, r * 0.1, ox, oy, r * 1.15);
         
-        if (objectType === 'station') {
+        if (objectType === 'station') 
+        {
             grad.addColorStop(0.15, 'transparent');
             grad.addColorStop(0.70, 'rgba(0, 0, 0, 0.82)');
             grad.addColorStop(1, 'rgba(3, 4, 6, 0.98)');
-        } else {
+        } 
+        else 
+        {
             grad.addColorStop(0.3, 'transparent');
             grad.addColorStop(1, COSMETIC_CONFIG.TERMINATOR_SHADOW);
         }
@@ -165,13 +185,14 @@ class SpaceObjectRenderer {
         ctx.fill();
     }
 
-    #drawAtmosphereGlow(ctx, r, spaceObject) {
+    #drawAtmosphereGlow(ctx, r, spaceObject) 
+    {
         const maxOpacity = spaceObject.rimOpacity;
         
         ctx.save();
         ctx.globalCompositeOperation = 'screen';
 
-        // 1. Inner limb atmospheric soft gradient wrap
+        // Inner limb atmospheric soft gradient wrap
         const innerGrad = ctx.createRadialGradient(0, 0, r * COSMETIC_CONFIG.ATMOS_INNER_RADIUS, 0, 0, r);
         innerGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
         innerGrad.addColorStop(0.5, spaceObject.atmosColor.replace(/[\d.]+\)$/, `${maxOpacity * 0.4})`));
@@ -182,7 +203,7 @@ class SpaceObjectRenderer {
         ctx.arc(0, 0, r, 0, Math.PI * 2);
         ctx.fill();
 
-        // 2. Outer scattering exosphere glow bloom filter
+        // Outer scattering exosphere glow bloom filter
         const outerGrad = ctx.createRadialGradient(0, 0, r, 0, 0, r * COSMETIC_CONFIG.ATMOS_OUTER_RADIUS);
         outerGrad.addColorStop(0, spaceObject.atmosColor.replace(/[\d.]+\)$/, `${maxOpacity})`));
         outerGrad.addColorStop(0.4, spaceObject.atmosColor.replace(/[\d.]+\)$/, `${maxOpacity * 0.3})`));
@@ -196,7 +217,8 @@ class SpaceObjectRenderer {
         ctx.restore();
     }
 
-    #drawRingHalf(ctx, r, spaceObject, rg, layer) {
+    #drawRingHalf(ctx, r, spaceObject, rg, layer) 
+    {
         if (!rg || spaceObject.type === 'station') return;
 
         const innerR = r * rg.innerRadius;
@@ -207,9 +229,12 @@ class SpaceObjectRenderer {
         ctx.scale(1, 0.28); 
 
         ctx.beginPath();
-        if (layer === 'front') {
+        if (layer === 'front') 
+        {
             ctx.rect(-outerR - 10, 0, (outerR * 2) + 20, outerR + 10);
-        } else {
+        } 
+        else 
+        {
             ctx.rect(-outerR - 10, -outerR - 10, (outerR * 2) + 20, outerR + 10);
         }
         ctx.clip();

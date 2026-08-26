@@ -42,7 +42,7 @@ class SpaceDirector
     else if (initialScreenW <= 1024) initialScreenCat = 'Tablet';
     else if (initialScreenW > 1920) initialScreenCat = 'Ultrawide';
 
-    console.log(`[DIRECTOR INIT] First ship in: ${initialDelay.toFixed(1)}s | Mode: MED | Screen: ${initialScreenCat} (${initialScreenW}x${initialScreenH}px)`);
+    //console.log(`[DIRECTOR INIT] First ship in: ${initialDelay.toFixed(1)}s | Mode: MED | Screen: ${initialScreenCat} (${initialScreenW}x${initialScreenH}px)`);
 
     this.#boundResize = () =>
     {
@@ -89,7 +89,8 @@ class SpaceDirector
       };
     };
 
-    this.#modeConfigs = {
+    this.#modeConfigs = 
+    {
       slow: getModeCfg('slow', 1.35, 0.74, 1.30, 'calm',  0.92),
       med:  getModeCfg('med',  1.00, 1.00, 1.00, 'drift', 1.00),
       fast: getModeCfg('fast', 0.65, 1.50, 0.70, 'drift', 1.10),
@@ -106,19 +107,19 @@ class SpaceDirector
 
     this.#currentMode = modeId;
 
-    // 1. Proportional Crawl Rescaling
+    // Proportional Crawl Rescaling
     if (this.#scene && this.#scene.crawl)
     {
       this.#scene.crawl.setSpeed(modeId);
     }
 
-    // 2. Starfield Integration Handshake
+    // Starfield Integration Handshake
     if (this.#scene && this.#scene.stars && typeof this.#scene.stars.setMode === 'function')
     {
       this.#scene.stars.setMode(cfg.starMode);
     }
 
-    // 3. Celestial Background Spin Scaling
+    // Celestial Background Spin Scaling
     if (this.#scene && this.#scene.backgroundObjects)
     {
       this.#scene.backgroundObjects.forEach(obj => {
@@ -129,7 +130,7 @@ class SpaceDirector
       });
     }
 
-    // 4. Audio System Coordination
+    // Audio System Coordination
     if (this.#audio && typeof this.#audio.setPlaybackRate === 'function')
     {
       this.#audio.setPlaybackRate('ambient_track', cfg.musicPitch, 0.5);
@@ -153,7 +154,7 @@ class SpaceDirector
       ? this.#scene.crawl.pxPerSec.toFixed(1)
       : (screenH / (cfg.baseScrollDuration || 65)).toFixed(1);
 
-    console.log(`[SPEED CHANGE] Mode: ${modeId.toUpperCase()} | Ship Cruise: ${(cfg.flightDuration || 26).toFixed(1)}s | Crawl Speed: ~${crawlSpeedPx} px/s (${(cfg.baseScrollDuration || 65).toFixed(1)}s duration) | Screen: ${screenCat} (${screenW}x${screenH}px)`);
+    //console.log(`[SPEED CHANGE] Mode: ${modeId.toUpperCase()} | Ship Cruise: ${(cfg.flightDuration || 26).toFixed(1)}s | Crawl Speed: ~${crawlSpeedPx} px/s (${(cfg.baseScrollDuration || 65).toFixed(1)}s duration) | Screen: ${screenCat} (${screenW}x${screenH}px)`);
   }
 
   // ── PUBLIC DYNAMIC RESIZE CALL TRIGGER ─────────────────────

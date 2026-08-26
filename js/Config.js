@@ -11,10 +11,10 @@
 // MED is the Master Baseline (100%). SLOW & FAST dynamically scale from MED.
 // ============================================================================
 const DIRECTOR_SETTINGS = Object.freeze({
-  // ── 1. MASTER SHIP TRAJECTORY & TIMING (MED BASELINE) ─────────────────────
-  SHIP_FIRST_APPEAR_DELAY_SEC: 1.0,   // Delay in seconds before 1st ship starts its flight
+  // MASTER SHIP TRAJECTORY & TIMING (MED BASELINE) ─────────────────────
+  SHIP_FIRST_APPEAR_DELAY_SEC: 3.0,   // Delay in seconds before 1st ship starts its flight
   SHIP_FLIGHT_DURATION_SEC:    40.0,  // Total flight duration across the screen in seconds (MED)
-  SHIP_RESPAWN_INTERVAL_SEC:   1.0,  // Cooldown in seconds AFTER a ship exits before the next one starts (MED)
+  SHIP_RESPAWN_INTERVAL_SEC:   2.0,  // Cooldown in seconds AFTER a ship exits before the next one starts (MED)
 
   // Explicit Start & End Waypoints (% of screen coordinates: [X, Y])
   // Start: X=90%, Y=112% (just below bottom-right edge of screen - appears in ~3s)
@@ -23,12 +23,12 @@ const DIRECTOR_SETTINGS = Object.freeze({
   SHIP_END_POS:   Object.freeze({ x: 25.0, y: -150.0 }),
   SHIP_ROTATION:  1.48, // Ship heading tilt in multiples of π (1.50 = straight up, 1.48 = gentle left diagonal)
 
-  // ── 2. MASTER CRAWL TEXT TIMING & SPEED (MED BASELINE) ────────────────────
+  // ── MASTER CRAWL TEXT TIMING & SPEED (MED BASELINE) ────────────────────
   CRAWL_START_DELAY_SEC:     1.0,   // Seconds after page load before crawl starts scrolling
   CRAWL_SCROLL_DURATION_SEC: 250.0,  // Master target duration in seconds on reference PC screen (MED)
   CRAWL_REF_DISTANCE_PX:     24300, // Reference PC text scroll distance to anchor reading velocity
 
-  // ── 3. SPEED MODE MULTIPLIERS (Applied to MED Baseline) ───────────────────
+  // ── SPEED MODE MULTIPLIERS (Applied to MED Baseline) ───────────────────
   // When user picks SLOW or FAST in the UI, all speeds scale cleanly from Master MED
   SPEED_MULTIPLIERS: Object.freeze({
     slow: Object.freeze({
@@ -61,12 +61,13 @@ const DIRECTOR_SETTINGS = Object.freeze({
     })
   }),
 
-  // ── 4. CELESTIAL & PLANET SYNC ───────────────────────────────────────────
+  // ── CELESTIAL & PLANET SYNC ───────────────────────────────────────────
   PLANET_START_POS:         Object.freeze({ x: 0.85, y: 0.80 }), // Standard background position
   PLANET_SPIN_SPEED:        0.0005, // Background axial rotation rate
-  PLANET_TRANSITION_AT_PCT: 0.50,   // Point along ship flight (0.50 = 50% midpoint) where eclipse triggers
+  PLANET_TRANSITION_AT_PCT: 0.45,   // Point along ship flight (0.50 = 50% midpoint) where eclipse triggers
+  PLANET_FADE_DURATION_SEC: 2.2,    // Smooth cross-dissolve duration in seconds for celestial transition
 
-  // ── 5. AUTO-RESET ON REFRESH ─────────────────────────────────────────────
+  // ── AUTO-RESET ON REFRESH ─────────────────────────────────────────────
   FORCE_CLEAN_RESTART_ON_REFRESH: true // Guarantees crawl text and ship always start at t=0 on page reload
 });
 
@@ -105,7 +106,8 @@ const SHARED_SYSTEM_MATH = Object.freeze({
 });
 
 // ── INTERNAL CONFIGURATION DATA STRUCTURE ────────────────────
-const _configData = {
+const _configData = 
+{
   // ── Master Cinematic Timing Controls ──────────────────────
   // Adjust overall speeds and synchronize world milestones here:
   cinematicTiming: Object.freeze({
@@ -269,18 +271,19 @@ const _configData = {
 };
 
 // ── PUBLIC CONFIG INTERFACE ─────────────────────────────────
-const CONFIG = {
-  // 1. Master Director Tuning Variables
+const CONFIG = 
+{
+  // Master Director Tuning Variables
   DIRECTOR:        DIRECTOR_SETTINGS,
 
-  // 2. Math and Global Enums
+  // Math and Global Enums
   System:          SHARED_SYSTEM_MATH,
   UIActions:       UI_ACTIONS,
   StorageKeys:     STORAGE_KEYS,
   SpeedModes:      SPEED_MODES,
   StarModes:       STAR_MODES,
 
-  // 3. Static Configurations
+  // Static Configurations
   cinematicTiming: _configData.cinematicTiming,
   crawlSpeed:      _configData.crawlSpeed,
   crawlLayout:     _configData.crawlLayout,
@@ -299,27 +302,37 @@ const CONFIG = {
 Object.freeze(CONFIG);
 
 // ── UTILITY STORAGE WRAPPER ──────────────────────────────────
-const StorageUtil = {
-  get(key, fallbackValue) {
-    try {
+const StorageUtil = 
+{
+  get(key, fallbackValue) 
+  {
+    try 
+    {
       const savedData = localStorage.getItem("starCrawlSettings");
-      if (savedData) {
+      if (savedData) 
+      {
         const settings = JSON.parse(savedData);
         if (settings[key] !== undefined) return settings[key];
       }
-    } catch (e) {
+    } 
+    catch (e)
+    {
       console.error(`StorageUtil: Failed to read key "${key}"`, e);
     }
     return fallbackValue;
   },
 
-  set(key, value) {
-    try {
+  set(key, value) 
+  {
+    try 
+    {
       const savedData = localStorage.getItem("starCrawlSettings");
       const currentSettings = savedData ? JSON.parse(savedData) : {};
       currentSettings[key] = value;
       localStorage.setItem("starCrawlSettings", JSON.stringify(currentSettings));
-    } catch (e) {
+    } 
+    catch (e) 
+    {
       console.error(`StorageUtil: Failed to save key "${key}"`, e);
     }
   }

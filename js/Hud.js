@@ -50,23 +50,28 @@ class HUD extends UIComponent
 
   // ── UPDATE ACTIVE DISPLAY BUTTON STYLES ────────────────────
   updateVisualState(actionType, value)
+{
+  // Map actions directly to their corresponding mode objects
+  const actionRegistry = 
   {
-    if (actionType === CONFIG.UIActions.SET_SPEED)
-    {
-      ['slow', 'med', 'fast'].forEach(b => {
-        const btn = document.getElementById(`speed-${b}`);
-        if (btn) btn.className = (b === value) ? 'active-speed' : '';
-      });
-    }
+    [CONFIG.UIActions.SET_SPEED]: Object.values(SPEED_MODES),
+    [CONFIG.UIActions.SET_STARS]: Object.values(STAR_MODES)
+  };
 
-    if (actionType === CONFIG.UIActions.SET_STARS)
-    {
-      ['calm', 'drift', 'warp'].forEach(b => {
-        const btn = document.getElementById(`stars-${b}`);
-        if (btn) btn.className = (b === value) ? 'active-speed' : '';
-      });
-    }
-  }
+  const targetModes = actionRegistry[actionType];
+  if (!targetModes) return; // Guard clause against unmapped action types
+
+  // Determine prefix string based on the active action type
+  const prefix = actionType === CONFIG.UIActions.SET_SPEED ? 'speed' : 'stars';
+
+  // Execute single loop state update
+  targetModes.forEach(mode => 
+  {
+    const btn = document.getElementById(`${prefix}-${mode}`);
+    if (btn) btn.className = (mode === value) ? 'active-speed' : '';
+  });
+}
+
 
   // ── Auto-Hide Behavior ─────────────────────────────────────
   #initAutoHide()
@@ -74,8 +79,10 @@ class HUD extends UIComponent
     if (!this.#el) return;
     this.#el.style.transition = this.#config.transitionCss || CONFIG.hud?.transitionCss || 'opacity 0.6s ease, transform 0.6s ease';
     
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+    requestAnimationFrame(() => 
+    {
+      requestAnimationFrame(() => 
+      {
         this.#show();
         this.addListener(document, 'mousemove',  this.#boundShow);
         this.addListener(document, 'touchstart', this.#boundShow);

@@ -27,6 +27,11 @@ class Scene
   #shipIndex = 0;
   #telemetryTimer = 0; // Periodic logger every 3 seconds
 
+  // Smooth celestial transition states (Atmospheric Cross-Dissolve)
+  #outgoingPlanet = null;
+  #fadeProgress = 1.0; // 1.0 = fully settled on active planet; 0.0 -> 1.0 during cross-fade
+  #fadeDuration = 2.2; // Seconds for smooth transition
+
   // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor(audio) 
   {
@@ -196,7 +201,7 @@ class Scene
     const crawlSpeedPx = (this.#crawl && typeof this.#crawl.pxPerSec === 'number') ? this.#crawl.pxPerSec.toFixed(1) : 'N/A';
     const crawlDur = (this.#crawl && typeof this.#crawl.duration === 'number') ? this.#crawl.duration.toFixed(1) : 'N/A';
 
-    console.log(`[SHIP SPAWN] Type: ${shipName} | Screen: ${screenInfo.label} | Ship Speed: ${speedPxPerSec.toFixed(1)} px/s (${durationSec.toFixed(1)}s duration) | Enters screen in: ${etaSeconds.toFixed(1)}s | Crawl Speed: ${crawlSpeedPx} px/s (${crawlDur}s duration)`);
+    //console.log(`[SHIP SPAWN] Type: ${shipName} | Screen: ${screenInfo.label} | Ship Speed: ${speedPxPerSec.toFixed(1)} px/s (${durationSec.toFixed(1)}s duration) | Enters screen in: ${etaSeconds.toFixed(1)}s | Crawl Speed: ${crawlSpeedPx} px/s (${crawlDur}s duration)`);
   }
 
   // ── Loop Core ──────────────────────────────────────────────
@@ -204,6 +209,26 @@ class Scene
   {
     if (this.#stars) this.#stars.update(dt);
     if (this.#crawl) this.#crawl.update(dt);
+
+    const fixedTimestep = (typeof CONFIG !== 'undefined' && CONFIG.System && CONFIG.System.FIXED_TIMESTEP) 
+      ? CONFIG.System.FIXED_TIMESTEP 
+      : 1 / 60;
+    const dtSeconds = (dt || 1) * fixedTimestep;
+
+    // Advance planet cross-fade progress if currently transitioning
+    if (this.#outgoingPlanet && this.#fadeProgress < 1.0)
+    {
+      this.#fadeProgress += dtSeconds / this.#fadeDuration;
+      if (this.#fadeProgress >= 1.0)
+      {
+        this.#fadeProgress = 1.0;
+        this.#outgoingPlanet = null; // Transition complete; clean up outgoing reference
+      }
+      else
+      {
+        this.#outgoingPlanet.update(dt);
+      }
+    }
 
     if (this.#backgroundObjects)
     {
@@ -231,7 +256,7 @@ class Scene
         const speedPxPerSec = totalDistPx / s.duration;
         const shipXpx = Math.round((s.xPct / 100) * canvasW);
         const shipYpx = Math.round((s.yPct / 100) * canvasH);
-        console.log(`[SHIP VISIBLE] ${shipName} entered screen | Pos: (${s.xPct.toFixed(1)}%, ${s.yPct.toFixed(1)}%) = [${shipXpx}px, ${shipYpx}px] | Speed: ${speedPxPerSec.toFixed(1)} px/s | Screen: ${screenInfo.label}`);
+        //console.log(`[SHIP VISIBLE] ${shipName} entered screen | Pos: (${s.xPct.toFixed(1)}%, ${s.yPct.toFixed(1)}%) = [${shipXpx}px, ${shipYpx}px] | Speed: ${speedPxPerSec.toFixed(1)} px/s | Screen: ${screenInfo.label}`);
       }
 
       // ── CINEMATIC ECLIPSE PLANET SWAP ──────────────────────────────
@@ -247,7 +272,7 @@ class Scene
         const shipName = this.#getShipName(null, s);
         const shipXpx = Math.round((s.xPct / 100) * canvasW);
         const shipYpx = Math.round((s.yPct / 100) * canvasH);
-        console.log(`[SHIP MIDPOINT] ${shipName} reached 50% pass | Pos: (${s.xPct.toFixed(1)}%, ${s.yPct.toFixed(1)}%) = [${shipXpx}px, ${shipYpx}px]`);
+        //console.log(`[SHIP MIDPOINT] ${shipName} reached 50% pass | Pos: (${s.xPct.toFixed(1)}%, ${s.yPct.toFixed(1)}%) = [${shipXpx}px, ${shipYpx}px]`);
         this.#cycleNextPlanet();
       }
 
@@ -262,14 +287,13 @@ class Scene
         const nextDelay = (typeof CONFIG !== 'undefined' && CONFIG.DIRECTOR && typeof CONFIG.DIRECTOR.SHIP_RESPAWN_INTERVAL_SEC === 'number')
           ? CONFIG.DIRECTOR.SHIP_RESPAWN_INTERVAL_SEC
           : 10.0;
-        console.log(`[SHIP EXIT] ${shipName} cleared top of screen. Next ship spawn in: ${nextDelay.toFixed(1)}s`);
+        //console.log(`[SHIP EXIT] ${shipName} cleared top of screen. Next ship spawn in: ${nextDelay.toFixed(1)}s`);
         this.#ships.splice(i, 1);
         this.#cycleNextShip(); // Advance ship pointer for the next launch
       }
     }
 
     // ── PERIODIC COORDINATE TELEMETRY (Every 3.0 seconds while active) ──
-    const dtSeconds = (dt || 1) * (typeof CONFIG !== 'undefined' && CONFIG.System ? CONFIG.System.FIXED_TIMESTEP : (1 / 60));
     this.#telemetryTimer += dtSeconds;
     if (this.#telemetryTimer >= 3.0)
     {
@@ -298,11 +322,11 @@ class Scene
           ((activeShip.endY - activeShip.startY) / 100) * canvasH
         );
         const shipSpd = totalDistPx / activeShip.duration;
-        console.log(`[STATUS] Ship: ${shipName} at (${activeShip.xPct.toFixed(1)}%, ${activeShip.yPct.toFixed(1)}%) = [${shipXpx}px, ${shipYpx}px] (${shipSpd.toFixed(1)} px/s, ${(activeShip.progress * 100).toFixed(0)}%) | ${crawlStr} | Screen: ${screenInfo.label}`);
+        //console.log(`[STATUS] Ship: ${shipName} at (${activeShip.xPct.toFixed(1)}%, ${activeShip.yPct.toFixed(1)}%) = [${shipXpx}px, ${shipYpx}px] (${shipSpd.toFixed(1)} px/s, ${(activeShip.progress * 100).toFixed(0)}%) | ${crawlStr} | Screen: ${screenInfo.label}`);
       }
       else
       {
-        console.log(`[STATUS] Ship: (none active in fleet) | ${crawlStr} | Screen: ${screenInfo.label}`);
+        //console.log(`[STATUS] Ship: (none active in fleet) | ${crawlStr} | Screen: ${screenInfo.label}`);
       }
     }
   }
@@ -314,6 +338,18 @@ class Scene
     if (!planetList.length) return;
 
     const prevPlanetName = this.#getPlanetName(this.#planetIndex);
+
+    // Save outgoing planet for smooth cross-dissolve
+    if (this.#backgroundObjects && this.#backgroundObjects.length > 0)
+    {
+      this.#outgoingPlanet = this.#backgroundObjects[0];
+      this.#fadeProgress = 0.0; // Start cross-fade from 0.0 to 1.0
+
+      const dirFadeSec = (typeof CONFIG !== 'undefined' && CONFIG.DIRECTOR && typeof CONFIG.DIRECTOR.PLANET_FADE_DURATION_SEC === 'number')
+        ? CONFIG.DIRECTOR.PLANET_FADE_DURATION_SEC
+        : 2.2;
+      this.#fadeDuration = dirFadeSec;
+    }
 
     this.#planetIndex = (this.#planetIndex + 1) % planetList.length;
     const nextPlanetBlueprint = planetList[this.#planetIndex];
@@ -330,7 +366,7 @@ class Scene
     const canvasH = (this.#canvas && this.#canvas.height) ? this.#canvas.height : window.innerHeight;
     const screenInfo = this.#getScreenInfo(canvasW, canvasH);
 
-    console.log(`[PLANET CHANGED] Active: ${newPlanetName} | Next in queue: ${queuedNextPlanetName} | Screen: ${screenInfo.label}`);
+    //console.log(`[PLANET TRANSITION] Dissolving ${prevPlanetName} -> ${newPlanetName} (${this.#fadeDuration.toFixed(1)}s cross-fade) | Next in queue: ${queuedNextPlanetName} | Screen: ${screenInfo.label}`);
   }
 
   #cycleNextShip()
@@ -364,10 +400,20 @@ class Scene
     const h = this.#spaceObjCanvas.height;
 
     ctx.clearRect(0, 0, w, h);
+
+    // If cross-fade transition is in progress, draw outgoing planet fading out
+    if (this.#outgoingPlanet && this.#fadeProgress < 1.0)
+    {
+      const outgoingOpacity = Math.max(0, 1.0 - this.#fadeProgress);
+      this.#spaceObjRenderer.draw(ctx, this.#outgoingPlanet, w, h, alpha, outgoingOpacity);
+    }
+
+    // Draw incoming/active planet fading in (or full opacity if settled)
     if (this.#backgroundObjects)
     {
+      const incomingOpacity = (this.#outgoingPlanet) ? Math.min(1.0, this.#fadeProgress) : 1.0;
       this.#backgroundObjects.forEach(obj => {
-        this.#spaceObjRenderer.draw(ctx, obj, w, h, alpha);
+        this.#spaceObjRenderer.draw(ctx, obj, w, h, alpha, incomingOpacity);
       });
     }
   }
@@ -399,5 +445,6 @@ class Scene
     }
     this.#ships = [];
     this.#backgroundObjects = [];
+    this.#outgoingPlanet = null;
   }
 }

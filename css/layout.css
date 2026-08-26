@@ -21,32 +21,44 @@
   --hud-divider-h     : auto;
 }
 
+
 /* ── Global Document Canvas Reset ────────────────────────────── */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+*
+{
+  margin:     0;
+  padding:    0;
+  box-sizing: border-box;
+}
 
 body
 {
-  overflow:    hidden;
-  height:      100vh;
-  width:       100vw;
-  background:  #000;
+  overflow: hidden;
+  height:   100vh;
+  width:    100vw;
+  background: #000;
 }
 
-/* ── Fixed Full-Screen Background Scene Layers ───────────────── */
-#stars, #nebula, #space-object, #ships, #vignette, #noise
+
+/* ── Fixed Full-Screen Background Scene Layers ────────────────── */
+#stars,
+#nebula,
+#space-object,
+#ships,
+#vignette,
+#noise
 {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
+  position:       fixed;
+  inset:          0;
+  width:          100vw;
+  height:         100vh;
   pointer-events: none;
 }
 
-#stars 
-{ 
-  z-index: 0; 
+#stars
+{
+  z-index:        0;
   pointer-events: auto;
-  will-change: transform;
+  will-change:    transform;
 }
 
 #nebula
@@ -58,29 +70,39 @@ body
 
 @keyframes nebula-shift
 {
-  from { opacity: 0.7; transform: scale(1);    }
-  to   { opacity: 1.0; transform: scale(1.05); }
+  from
+  {
+    opacity:   0.7;
+    transform: scale(1);
+  }
+
+  to
+  {
+    opacity:   1.0;
+    transform: scale(1.05);
+  }
 }
 
-#space-object 
-{ 
-  z-index: 2; 
+#space-object
+{
+  z-index: 2;
 }
 
 #ships
 {
-  z-index:        3;
+  z-index: 3;
 }
 
 #vignette
 {
-  z-index:        8;
+  z-index: 8;
 }
 
 #noise
 {
-  z-index:        9;
+  z-index: 9;
 }
+
 
 /* ── 3D Text Crawl Container Stage ───────────────────────────── */
 .crawl-stage
@@ -92,22 +114,31 @@ body
   overflow:       hidden;
   opacity:        0;
   transition:     opacity 0.5s ease;
-  -webkit-mask-image: linear-gradient(to bottom,
-    transparent  0%,
-    transparent 20%,
-    black       35%,
-    black       85%,
-    transparent 100%);
-  mask-image: linear-gradient(to bottom,
-    transparent  0%,
-    transparent 20%,
-    black       35%,
-    black       85%,
-    transparent 100%);
+
+  -webkit-mask-image:
+    linear-gradient(
+      to bottom,
+      transparent  0%,
+      transparent 20%,
+      black       35%,
+      black       85%,
+      transparent 100%
+    );
+
+  mask-image:
+    linear-gradient(
+      to bottom,
+      transparent  0%,
+      transparent 20%,
+      black       35%,
+      black       85%,
+      transparent 100%
+    );
 }
 
-.crawl-stage.active {
-  opacity: 1;
+.crawl-stage.active
+{
+  opacity:    1;
   visibility: visible;
 }
 
@@ -134,7 +165,7 @@ body
 }
 
 
-/* ── Interactive Head-Up Display Layout ──────────────────────── */
+/* ── Interactive Head-Up Display Layout ───────────────────────── */
 .HUD
 {
   position:        fixed;
@@ -142,12 +173,14 @@ body
   left:            50%;
   transform:       translateX(-50%) translateY(12px);
   z-index:         90;
+
   display:         flex;
   align-items:     center;
   flex-direction:  var(--hud-direction);
   width:           var(--hud-width);
   padding:         var(--hud-padding);
   gap:             var(--hud-gap);
+
   opacity:         0;
   will-change:     transform, opacity;
 }
@@ -161,7 +194,11 @@ body
   padding:        0 14px;
 }
 
-.btn-row { display: flex; gap: 4px; }
+.btn-row
+{
+  display: flex;
+  gap:     4px;
+}
 
 .hud-divider
 {
@@ -171,7 +208,8 @@ body
   flex-shrink: 0;
 }
 
-/* ── Content Text Editor Overlay Placement ──────────────────── */
+
+/* ── Content Text Editor Overlay Placement ───────────────────── */
 .editor-overlay
 {
   position:        fixed;
@@ -185,7 +223,11 @@ body
   transition:      opacity 0.3s ease;
 }
 
-.editor-overlay.open { opacity: 1; pointer-events: auto; }
+.editor-overlay.open
+{
+  opacity:        1;
+  pointer-events: auto;
+}
 
 .editor-box
 {
@@ -203,11 +245,11 @@ body
 
 #crawl-editor
 {
-  width:  100%;
-  height: 300px;
-  outline: none;
-  resize:  none;
-  padding: 18px;
+  width:    100%;
+  height:   300px;
+  outline:  none;
+  resize:   none;
+  padding:  18px;
 }
 
 .editor-footer
@@ -226,16 +268,18 @@ body
   flex-direction: column;
 }
 
-.editor-help.open { display: flex; }
+.editor-help.open
+{
+  display: flex;
+}
 
-/* ── Mobile Responsive Compositor Shifting ───────────────────── */
+
+/* ── Mobile Responsive Layout ────────────────────────────────── */
 @media (max-width: 640px)
 {
   :root
   {
     --crawl-width   : 92%;
-    /* LOCKED: Kept pitch unified at 40deg on mobile so text spacing matrices do not break! */
-    --crawl-pitch   : 40deg;
 
     --hud-direction : column;
     --hud-width     : calc(100vw - 32px);
@@ -254,5 +298,8 @@ body
     padding:         0;
   }
 
-  .btn-row { gap: 6px; }
+  .btn-row
+  {
+    gap: 6px;
+  }
 }
