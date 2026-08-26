@@ -24,6 +24,8 @@ class Crawl
   #logFrameCount = 0;
   #speeds = {};
   #layout = {};
+  #pitch = '25deg';
+  #boundResize;
 
   // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor(audio)
@@ -55,8 +57,15 @@ class Crawl
     this.#logFrameCount = 0;
 
     this.#initConstants();
+    this.#recalculatePitch();
     this.#buildContent(this.#defaultText);
     this.#bindEditor();
+
+    this.#boundResize = () => {
+      this.#recalculatePitch();
+      this.recalculateBounds();
+    };
+    window.addEventListener('resize', this.#boundResize);
   }
 
   // ── PUBLIC GETTERS & SETTERS ────────────────────────────────
@@ -121,11 +130,19 @@ class Crawl
     return (pxPerSec > 0) ? (dist / pxPerSec) : 95.0;
   }
 
+  #recalculatePitch()
+  {
+    if (typeof window !== 'undefined' && typeof document !== 'undefined')
+    {
+      this.#pitch = getComputedStyle(document.documentElement)
+        .getPropertyValue('--crawl-pitch').trim() || '25deg';
+    }
+  }
+
   // Reads CSS variable so pitch can be tweaked from the stylesheet
   #getPitch()
   {
-    return getComputedStyle(document.documentElement)
-      .getPropertyValue('--crawl-pitch').trim() || '25deg';
+    return this.#pitch;
   }
 
   // ── Content Parsing ────────────────────────────────────────

@@ -19,6 +19,8 @@ class StarField
   #cx = 0;
   #cy = 0;
   #boundResize;
+  #warpBuckets = Array.from({ length: 11 }, () => []);
+  #driftBuckets = Array.from({ length: 11 }, () => []);
 
   // ── CONSTRUCTOR ────────────────────────────────────────────
   constructor()
@@ -171,20 +173,23 @@ class StarField
 
     if (this.#mode === 'warp')
     {
-      const opacityBuckets = Array.from({ length: 11 }, () => []);
+      for (let b = 0; b <= 10; b++)
+      {
+        this.#warpBuckets[b].length = 0;
+      }
 
       for (let i = 0; i < this.#stars.length; i++)
       {
         const s = this.#stars[i];
         const alphaVal = this.#vis.warpOpacityMin + s.z * this.#vis.warpOpacityRange;
         const bucketIndex = Math.min(10, Math.floor(alphaVal * 10));
-        opacityBuckets[bucketIndex].push(s);
+        this.#warpBuckets[bucketIndex].push(s);
       }
 
       const stretch = cfg.stretch;
       for (let b = 0; b <= 10; b++)
       {
-        const bucket = opacityBuckets[b];
+        const bucket = this.#warpBuckets[b];
         if (bucket.length === 0) continue;
 
         ctx.beginPath();
@@ -215,19 +220,22 @@ class StarField
       const baseOp  = isDrift ? this.#vis.driftOpacityBase : this.#vis.calmOpacityBase;
       const ampOp   = isDrift ? this.#vis.driftOpacityAmp  : this.#vis.calmOpacityAmp;
 
-      const alphaBuckets = Array.from({ length: 11 }, () => []);
+      for (let b = 0; b <= 10; b++)
+      {
+        this.#driftBuckets[b].length = 0;
+      }
 
       for (let i = 0; i < this.#stars.length; i++)
       {
         const s = this.#stars[i];
         const alphaVal = baseOp + Math.sin(s.twinkle) * ampOp;
         const bucketIndex = Math.min(10, Math.max(0, Math.floor(alphaVal * 10)));
-        alphaBuckets[bucketIndex].push(s);
+        this.#driftBuckets[bucketIndex].push(s);
       }
 
       for (let b = 0; b <= 10; b++)
       {
-        const bucket = alphaBuckets[b];
+        const bucket = this.#driftBuckets[b];
         if (bucket.length === 0) continue;
 
         ctx.beginPath();

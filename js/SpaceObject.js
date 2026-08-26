@@ -261,9 +261,6 @@ class SpaceStationEntity extends SpaceObject
     #bandCount;
     #bandOpacityMin;
     #bandOpacityMax;
-    #craters = [];
-    #rings = [];
-    #baseHighlight;
     #dishXRatio;
     #dishYRatio;
 
@@ -276,11 +273,8 @@ class SpaceStationEntity extends SpaceObject
         this.#bandCount      = config.bandCount ?? 55;
         this.#bandOpacityMin = config.bandOpacityMin ?? 0.15;
         this.#bandOpacityMax = config.bandOpacityMax ?? 0.32;
-        this.#craters        = config.craters || []; 
-        this.#rings          = []; 
         
         this.baseColor       = config.baseColor || '#7d8491'; 
-        this.#baseHighlight  = config.baseHighlight || '#000000';
         this.rimOpacity      = config.rimOpacity ?? 0.26; 
 
         this.#dishXRatio     = config.dishXRatio ?? 0.165; 
@@ -299,15 +293,6 @@ class SpaceStationEntity extends SpaceObject
 
     get bandOpacityMax() { return this.#bandOpacityMax; }
     set bandOpacityMax(val) { this.#bandOpacityMax = val; }
-
-    get craters() { return this.#craters; }
-    set craters(val) { this.#craters = val; }
-
-    get rings() { return this.#rings; }
-    set rings(val) { this.#rings = val; }
-
-    get baseHighlight() { return this.#baseHighlight; }
-    set baseHighlight(val) { this.#baseHighlight = val; }
 
     get dishXRatio() { return this.#dishXRatio; }
     set dishXRatio(val) { this.#dishXRatio = val; }

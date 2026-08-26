@@ -101,7 +101,7 @@ body
 
   /* Justification Stability Engine */
   text-align:      justify;
-  text-align-last: center;
+  text-align-last: left;
 
   color:           var(--gold);
   text-shadow:     0 0 12px var(--gold-glow-strong),
